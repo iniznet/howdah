@@ -127,8 +127,11 @@ final readonly class ContentRepository
         if ($this->presence->present()) {
             $joined = $terms->forMatch();
             $match = $this->clause->against($joined);
+            // Core glues the filter's payload straight after "WHERE 1=1",
+            // so the swapped-in fragment carries core's own AND and the
+            // parenthesisation core's LIKE fragment has.
             $filters['howdah_indexed_search'] = true;
-            $filters['howdah_match_clause'] = $match;
+            $filters['howdah_match_clause'] = ' AND ('.$match.')';
             $filters['howdah_match_orderby'] = $match.' DESC';
         }
 

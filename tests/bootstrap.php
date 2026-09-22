@@ -77,7 +77,16 @@ tests_add_filter(
         remove_filter('gettext_with_context', $recorder, 10);
 
         // The theme's tables come from the same migrations production runs on
-        // a theme switch; a test suite is a first install.
+        // a theme switch; a test suite is a first install. A first install
+        // starts from an empty migration ledger, so the reset drops the
+        // ledger and the tables it describes — otherwise a stale ledger row
+        // would hide an index that core's table handling may have removed.
+        global $wpdb;
+
+        foreach (['mahout_migrations', 'mahout_field_items', 'mahout_field_values'] as $table) {
+            $wpdb->query('DROP TABLE IF EXISTS '.$wpdb->prefix.$table);
+        }
+
         Iniznet\Howdah\Bootstrap::services()
             ->get(Iniznet\Mahout\Db\MigrationRunner::class)
             ->migrate();
