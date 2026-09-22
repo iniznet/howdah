@@ -2,13 +2,13 @@
 
 /**
  * The search arm. The key space of a free-text term is not enumerable, so
- * the arm is Uncacheable at both layers (SRCH-01).
+ * the arm is Uncacheable at both the HTTP layer and the fragment layer.
  *
  * A term with no usable token renders the empty state and issues no query —
- * the LIKE fallback for a too-short search would be the attack. A usable
- * term needs the search repository slice 8b binds; until then the Surface
- * throws rather than pretend, and the error boundary renders the defined
- * failure.
+ * the LIKE fallback for a too-short search would be the attack the search
+ * rules exist to prevent. The repository decides the indexed path; when the
+ * FULLTEXT index is absent the Surface records the fallback loudly, once per
+ * request — a read path records no per-request log of its own.
  */
 
 declare(strict_types=1);
@@ -16,39 +16,84 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Render\Surfaces;
 
 use Iniznet\Howdah\Components\Message\Message;
+use Iniznet\Howdah\Components\Post\ArchiveHeading;
+use Iniznet\Howdah\Components\Post\Pagination;
+use Iniznet\Howdah\Components\Post\PostCard;
+use Iniznet\Howdah\Features\Content\ContentRepository;
+use Iniznet\Howdah\Features\Content\MatchClause;
+use Iniznet\Howdah\Features\Content\SearchTerms;
 use Iniznet\Howdah\Render\Component;
 use Iniznet\Howdah\Render\Document;
-use Iniznet\Howdah\Render\Exception\SurfaceDataMissing;
 use Iniznet\Howdah\Render\QueryContext;
+use Iniznet\Howdah\Render\Stack;
 use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Mahout\Kernel\Diagnostics;
+use Iniznet\Mahout\Kernel\Level;
 
 final readonly class SearchResults implements Component
 {
-    private const int MAX_TOKENS = 8;
-    private const int MAX_TOKEN_BYTES = 100;
-    private const int MIN_TOKEN_SIZE = 3;
+    /** The per-request query ceiling this Surface is held to (reader budget). */
+    public const int QUERY_CEILING = 10;
 
     public function __construct(
         private QueryContext $ctx,
         private ClassResolver $classes,
+        private ContentRepository $content,
+        private Diagnostics $diagnostics,
     ) {
     }
 
     public function render(): string
     {
-        $term = $this->term();
+        $terms = SearchTerms::fromString($this->term());
 
-        if ([] === $this->usableTokens($term)) {
+        if (!$terms->hasTokens()) {
             return new Document(
                 $this->classes,
                 main: new Message(
                     $this->classes,
                     heading: \__('Nothing matched this search.', 'howdah'),
+                    detail: \sprintf(
+                        \__('Every word needs at least %d letters or numbers.', 'howdah'),
+                        SearchTerms::MIN_TOKEN_SIZE,
+                    ),
                 ),
             )->render();
         }
 
-        throw SurfaceDataMissing::forQuery($term);
+        if (!$this->content->searchIsIndexed()) {
+            $this->diagnostics->log(
+                level: Level::Error,
+                message: 'search index missing; core search path in use',
+                context: ['index' => MatchClause::INDEX_NAME],
+            );
+        }
+
+        $list = $this->content->search($terms, $this->ctx->listingPage());
+
+        if ([] === $list->items) {
+            return new Document(
+                $this->classes,
+                main: new Message(
+                    $this->classes,
+                    heading: \__('Nothing matched this search.', 'howdah'),
+                    detail: $terms->raw,
+                ),
+            )->render();
+        }
+
+        $items = [new ArchiveHeading(
+            $this->classes,
+            \sprintf(\__('Search results for: %s', 'howdah'), $terms->raw),
+        )];
+
+        foreach ($list->items as $post) {
+            $items[] = new PostCard($this->classes, $post);
+        }
+
+        $items[] = $this->pagination($list->hasMore, $this->ctx->listingPage());
+
+        return new Document($this->classes, main: new Stack($items))->render();
     }
 
     /** The raw term, from the query vars — never from a superglobal. */
@@ -59,34 +104,11 @@ final readonly class SearchResults implements Component
         return \is_string($s) ? $s : '';
     }
 
-    /**
-     * At most eight tokens, each at most 100 bytes, each at least the
-     * server's minimum FULLTEXT token size. Enforced before any query is
-     * built, so a malformed term never reaches AGAINST.
-     *
-     * @return list<string>
-     */
-    private function usableTokens(string $term): array
+    private function pagination(bool $hasMore, int $page): Pagination
     {
-        $raw = \preg_split('/\\s+/u', \trim($term)) ?: [];
-        $tokens = [];
+        $newer = $page > 1 ? \get_pagenum_link($page - 1) : null;
+        $older = $hasMore ? \get_pagenum_link($page + 1) : null;
 
-        foreach ($raw as $token) {
-            if ('' === $token || \strlen($token) > self::MAX_TOKEN_BYTES) {
-                continue;
-            }
-
-            if (\mb_strlen($token) < self::MIN_TOKEN_SIZE) {
-                continue;
-            }
-
-            $tokens[] = $token;
-
-            if (self::MAX_TOKENS === \count($tokens)) {
-                break;
-            }
-        }
-
-        return $tokens;
+        return new Pagination($this->classes, $newer, $older);
     }
 }

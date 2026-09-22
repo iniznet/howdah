@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidHookResult;
+use Iniznet\Howdah\Render\Cacheability;
 use Iniznet\Howdah\Render\FragmentCache;
 use Iniznet\Howdah\Render\FragmentKey;
 use Iniznet\Howdah\Render\QueryContext;
@@ -14,6 +15,9 @@ use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Support\Request;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
+use Iniznet\Mahout\Kernel\Diagnostics;
+use Iniznet\Mahout\Kernel\Environment;
+use Iniznet\Mahout\Kernel\Level;
 
 /**
  * The render pipeline's composition: the fragment store is bound here, and
@@ -56,8 +60,17 @@ final class RenderProvider implements ServiceProvider
         }
 
         $request = Request::fromSuperglobals();
-        $plan = Surfaces::plan(QueryContext::current(), $container);
-        $policy = HeaderPolicy::derive($plan->cacheability, $request->method, \is_user_logged_in());
+        $ctx = QueryContext::current();
+        $plan = Surfaces::plan($ctx, $container);
+        $policy = HeaderPolicy::derive(
+            $plan->cacheability,
+            $request->method,
+            \is_user_logged_in(),
+            outOfRangePage: $ctx->outOfRangePage,
+            freeTextSearch: $ctx->freeTextSearch,
+        );
+
+        self::recordReduction($container, $plan->cacheability, $policy->effective);
 
         $validators = $policy->emitsValidators() && null !== $plan->key;
 
@@ -101,6 +114,30 @@ final class RenderProvider implements ServiceProvider
     private static function etag(FragmentKey $key): string
     {
         return '"'.\md5($key->toString()).'"';
+    }
+
+    /**
+     * The derivation is not a silent downgrade: when the request state
+     * reduced the declared class, development records the reduction with its
+     * reason. Production records nothing — a per-request log is a cost.
+     */
+    private static function recordReduction(Container $container, Cacheability $declared, Cacheability $effective): void
+    {
+        if ($declared === $effective) {
+            return;
+        }
+
+        $environment = $container->get(Environment::class);
+
+        if (!$environment->developmentMode) {
+            return;
+        }
+
+        $container->get(Diagnostics::class)->log(
+            level: Level::Warning,
+            message: 'cacheability reduced by request state',
+            context: ['declared' => $declared->name, 'effective' => $effective->name],
+        );
     }
 
     /**

@@ -18,6 +18,9 @@ use Iniznet\Howdah\Support\ClassResolver;
 
 final readonly class NotFound implements Component
 {
+    /** The per-request query ceiling this Surface is held to (reader budget). */
+    public const int QUERY_CEILING = 6;
+
     public function __construct(
         private QueryContext $ctx,
         private ClassResolver $classes,

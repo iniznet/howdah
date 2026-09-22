@@ -25,7 +25,37 @@ final readonly class QueryContext
         public ?string $objectSubtype,
         public array $queryVars,
         public SiteProfile $site,
+        public bool $outOfRangePage = false,
+        public bool $freeTextSearch = false,
     ) {
+    }
+
+    /** The listing page a listing or archive renders, from the query vars. */
+    public function listingPage(): int
+    {
+        return \max(1, $this->intVar('paged'));
+    }
+
+    /** The content page a singular request renders, from the query vars. */
+    public function contentPage(): int
+    {
+        return \max(1, $this->intVar('page'));
+    }
+
+    /** One query var as an integer; absent or non-numeric reads as zero. */
+    public function intVar(string $name): int
+    {
+        $value = $this->queryVars[$name] ?? null;
+
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        if (\is_string($value) && \ctype_digit($value)) {
+            return (int) $value;
+        }
+
+        return 0;
     }
 
     /** The only \$wp_query read, and the only site read. */
@@ -61,6 +91,15 @@ final readonly class QueryContext
             }
         }
 
+        $paged = 1;
+        $pagedVar = $query->get('paged');
+
+        if (\is_numeric($pagedVar)) {
+            $paged = \max(1, (int) $pagedVar);
+        }
+
+        $searchVar = $query->get('s');
+
         return new self(
             kind: self::kind($query),
             postType: $postType,
@@ -68,6 +107,8 @@ final readonly class QueryContext
             objectSubtype: $subtype,
             queryVars: $queryVars,
             site: SiteProfile::fromWordPress(),
+            outOfRangePage: $query->is_paged() && $paged > \max(1, $query->max_num_pages),
+            freeTextSearch: $query->is_search() && \is_string($searchVar) && '' !== \trim($searchVar),
         );
     }
 

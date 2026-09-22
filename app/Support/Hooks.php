@@ -119,4 +119,90 @@ final class Hooks
      * @param list<string> $keys the fragment keys the purge covers
      */
     public const string PURGE = 'howdah/cache/purge';
+    /**
+     * Core's post-save action. FragmentInvalidation observes it, skips
+     * autosaves and revisions, bumps the fragment group once per request and
+     * fires the purge seam once.
+     *
+     * @since 1.0
+     *
+     * @action
+     *
+     * @param int      $postId the saved post's id
+     * @param \WP_Post $post   the saved post
+     * @param bool     $update whether this is an update of an existing post
+     */
+    public const string SAVE_POST = 'save_post';
+
+    /**
+     * Core's post-deletion action, which mahout-db's orphan path also
+     * observes.
+     *
+     * @since 1.0
+     *
+     * @action
+     *
+     * @param int      $postId the deleted post's id
+     * @param \WP_Post $post   the deleted post
+     */
+    public const string DELETED_POST = 'deleted_post';
+
+    /**
+     * Core's content filter. PostMapper runs raw post content through it —
+     * kses, blocks and shortcodes — in the one boundary where content leaves
+     * the request's hands; the mapper is the taint escape's owner.
+     *
+     * @since 1.0
+     *
+     * @filter
+     *
+     * @param string $content the post content core is filtering
+     */
+    public const string THE_CONTENT = 'the_content';
+
+    /**
+     * The migration filter mahout-db reads the site's declared migrations
+     * from. ContentProvider registers the search index's migration here, in
+     * register() — the ledger is built when the db provider boots, which is
+     * before this provider's boot.
+     *
+     * @since 1.0
+     *
+     * @filter
+     *
+     * @param list<\Iniznet\Mahout\Db\Contracts\Migration> $migrations the declared migrations, in order
+     */
+    public const string MIGRATIONS = 'mahout/db/migrations';
+
+    /**
+     * Core's search-fragment filter, inside WP_Query::get_posts(). The search
+     * repository builds the FULLTEXT clause and travels it on the query vars;
+     * this filter swaps it in only for a query that declared the indexed path
+     * and returns its first argument otherwise.
+     * repository builds the FULLTEXT clause and travels it on the query vars;
+     * this filter swaps it in only for a query that declared the indexed path
+     * and returns its first argument otherwise.
+     *
+     * @since 1.0
+     *
+     * @filter
+     *
+     * @param string    $search the search fragment core built
+     * @param \WP_Query $query  the running query
+     */
+    public const string POSTS_SEARCH = 'posts_search';
+
+    /**
+     * Core's search-ordering filter, in the same query as POSTS_SEARCH. The
+     * repository's relevance expression replaces core's title-match CASE for
+     * an indexed search only.
+     *
+     * @since 1.0
+     *
+     * @filter
+     *
+     * @param string    $orderby the ordering core built
+     * @param \WP_Query $query   the running query
+     */
+    public const string POSTS_SEARCH_ORDERBY = 'posts_search_orderby';
 }

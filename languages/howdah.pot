@@ -8,6 +8,18 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "X-Domain: howdah\n"
 
+#: app/Components/Post/markup/pagination.php:11
+msgid "Newer"
+msgstr ""
+
+#: app/Components/Post/markup/pagination.php:14
+msgid "Older"
+msgstr ""
+
+#: app/Components/Post/markup/embed-body.php:17
+msgid "Read the full post"
+msgstr ""
+
 #: app/Render/markup/shell-open.php:18
 msgid "Skip to content"
 msgstr ""

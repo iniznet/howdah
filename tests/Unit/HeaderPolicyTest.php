@@ -71,4 +71,59 @@ final class HeaderPolicyTest extends TestCase
         self::assertSame(Cacheability::Private, $policy->effective);
         self::assertTrue($policy->emitsValidators());
     }
+
+    public function testTheFullDerivationTableCellByCell(): void
+    {
+        // [declared, state name] => expected class. The request state only
+        // ever reduces; no cell widens a declaration.
+        $expected = [
+            'Shared' => [
+                'anonymous, in range' => 'Shared',
+                'logged in' => 'Private',
+                'POST' => 'Uncacheable',
+                'out-of-range page' => 'Uncacheable',
+                'free-text search' => 'Uncacheable',
+                'error' => 'Uncacheable',
+            ],
+            'Private' => [
+                'anonymous, in range' => 'Private',
+                'logged in' => 'Private',
+                'POST' => 'Uncacheable',
+                'out-of-range page' => 'Uncacheable',
+                'free-text search' => 'Uncacheable',
+                'error' => 'Uncacheable',
+            ],
+            'Uncacheable' => [
+                'anonymous, in range' => 'Uncacheable',
+                'logged in' => 'Uncacheable',
+                'POST' => 'Uncacheable',
+                'out-of-range page' => 'Uncacheable',
+                'free-text search' => 'Uncacheable',
+                'error' => 'Uncacheable',
+            ],
+        ];
+
+        $states = [
+            'anonymous, in range' => ['GET', false, false, false, false],
+            'logged in' => ['GET', true, false, false, false],
+            'POST' => ['POST', false, false, false, false],
+            'out-of-range page' => ['GET', false, true, false, false],
+            'free-text search' => ['GET', false, false, true, false],
+            'error' => ['GET', false, false, false, true],
+        ];
+
+        foreach ($expected as $declaredName => $row) {
+            $declared = Cacheability::{$declaredName};
+
+            foreach ($row as $state => $expectedClass) {
+                $policy = HeaderPolicy::derive($declared, ...$states[$state]);
+
+                self::assertSame(
+                    $expectedClass,
+                    $policy->effective->name,
+                    $declaredName.' under '.$state.' derives '.$expectedClass.'.',
+                );
+            }
+        }
+    }
 }

@@ -2,14 +2,16 @@
 
 /**
  * The response policy, derived from the declared cacheability class and the
- * request state. 13-caching §2 is the authority: the three class rows are
- * verbatim, and a reduction stricter than the declaration always wins.
+ * request state. The caching contract's derivation is the authority: the
+ * three class rows are verbatim, and a reduction stricter than the
+ * declaration always wins.
  *
- * The two request-state reductions whose inputs this slice owns are the
- * state-changing methods and the logged-in visitor. The out-of-range page
- * and the engaged error boundary arrive with the render's data in slice 8b;
- * their cells are stated in the class docblock of the derivation and in the
- * handoff, not silently absent.
+ * The full 3 x 6 table — anonymous in range, logged in, state-changing
+ * method, out-of-range page, free-text search, engaged error boundary — is
+ * asserted cell by cell by the policy's test. At send-headers time four of
+ * the six inputs exist (method, logged-in, out-of-range page, free-text
+ * search); the error cell's runtime seam is the Error Surface's 500, which
+ * is sent after the header phase and carries no validator of its own.
  */
 
 declare(strict_types=1);
@@ -28,11 +30,21 @@ final readonly class HeaderPolicy
     ) {
     }
 
-    public static function derive(Cacheability $declared, string $method, bool $loggedIn): self
-    {
+    public static function derive(
+        Cacheability $declared,
+        string $method,
+        bool $loggedIn,
+        bool $outOfRangePage = false,
+        bool $freeTextSearch = false,
+        bool $errorBoundary = false,
+    ): self {
         $effective = $declared;
 
         if (\in_array(\strtoupper($method), self::STATE_CHANGING, true)) {
+            $effective = Cacheability::Uncacheable;
+        }
+
+        if ($outOfRangePage || $freeTextSearch || $errorBoundary) {
             $effective = Cacheability::Uncacheable;
         }
 
