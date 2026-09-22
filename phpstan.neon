@@ -3,3 +3,6 @@ includes:
 parameters:
 	paths:
 		- app
+	bootstrapFiles:
+		- vendor/iniznet/mahout-devtools/stubs/wordpress-stubs.php
+		- stubs/wp-cli-stubs.php

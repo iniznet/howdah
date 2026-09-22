@@ -14,6 +14,7 @@ namespace Iniznet\Howdah;
 use Iniznet\Howdah\Exception\NotBooted;
 use Iniznet\Howdah\Providers\AdminProvider;
 use Iniznet\Howdah\Providers\AssetsProvider;
+use Iniznet\Howdah\Providers\CliProvider;
 use Iniznet\Howdah\Providers\ContentProvider;
 use Iniznet\Howdah\Providers\EditorProvider;
 use Iniznet\Howdah\Providers\RenderProvider;
@@ -52,6 +53,7 @@ final class Bootstrap
         $kernel->provider(ContentProvider::class);
         $kernel->provider(EditorProvider::class);
         $kernel->provider(AdminProvider::class);
+        $kernel->provider(CliProvider::class);
         $kernel->provider(RenderProvider::class);
 
         $kernel->boot();

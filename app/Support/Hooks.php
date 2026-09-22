@@ -167,6 +167,17 @@ final class Hooks
     public const string REST_API_INIT = 'rest_api_init';
 
     /**
+     * WP-CLI's registration action, fired before WP-CLI dispatches. The
+     * migration command registers here, behind the provider's WP_CLI gate;
+     * a site without WP-CLI never reaches this hook.
+     *
+     * @since 1.0
+     *
+     * @action
+     */
+    public const string CLI_INIT = 'cli_init';
+
+    /**
      * Core's list-screen filter-dropdown action. The declared panels' Choice
      * filters render here, one dropdown per filterable field.
      *
