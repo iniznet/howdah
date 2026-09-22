@@ -5,6 +5,15 @@
  */
 
 @import './tokens.css' layer(tokens);
+@import './layout.css' layer(layout);
+@import './typography.css' layer(components);
+@import './actions.css' layer(components);
+@import './navigation.css' layer(components);
+@import './content.css' layer(components);
+@import './feedback.css' layer(components);
+@import './forms.css' layer(components);
+@import './overlays.css' layer(components);
+@import './navigation.css' layer(components);
 
 @layer base, layout, components;
 

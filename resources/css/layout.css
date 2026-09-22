@@ -1,0 +1,61 @@
+/*
+ * Layout primitives: stack, cluster, grid, container, section. Each owns one
+ * layout decision and nothing else; sizes come from the spacing tokens.
+ */
+
+@layer layout {
+	.stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.stack--small {
+		gap: var(--space-sm);
+	}
+
+	.stack--large {
+		gap: var(--space-lg);
+	}
+
+	.cluster {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-sm);
+	}
+
+	.cluster--large {
+		gap: var(--space-md);
+	}
+
+	.grid {
+		display: grid;
+		gap: var(--space-md);
+		grid-template-columns: repeat(var(--howdah-grid-columns, 2), minmax(0, 1fr));
+	}
+
+	@media (max-width: 48rem) {
+		.grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	.container {
+		inline-size: 100%;
+		padding-inline: var(--space-gutter);
+		margin-inline: auto;
+	}
+
+	.container--reading {
+		max-inline-size: var(--wp--style--global--content-size, 40rem);
+	}
+
+	.container--wide {
+		max-inline-size: var(--wp--style--global--wide-size, 80rem);
+	}
+
+	.section {
+		padding-block: var(--space-lg);
+	}
+}

@@ -1,0 +1,48 @@
+/*
+ * Typography components. The heading scale is visual only — the outline
+ * comes from the HeadingLevel enum, never from the size.
+ */
+
+@layer components {
+	.heading {
+		line-height: 1.2;
+		text-wrap: balance;
+	}
+
+	.heading--1 {
+		font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem);
+	}
+
+	.heading--2 {
+		font-size: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);
+	}
+
+	.heading--3 {
+		font-size: clamp(1.25rem, 1.15rem + 0.75vw, 1.5rem);
+	}
+
+	.heading--4,
+	.heading--5,
+	.heading--6 {
+		font-size: 1.125rem;
+	}
+
+	.prose > * + * {
+		margin-block-start: 1em;
+	}
+
+	.label {
+		display: block;
+		font-weight: 600;
+	}
+
+	.help-text {
+		font-size: 0.875rem;
+		color: light-dark(color-mix(in oklch, var(--wp--preset--color--base), var(--wp--preset--color--surface) 25%), color-mix(in oklch, var(--wp--preset--color--surface), var(--wp--preset--color--base) 25%));
+	}
+
+	.error-text {
+		font-size: 0.875rem;
+		color: var(--wp--preset--color--danger);
+	}
+}

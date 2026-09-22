@@ -6,6 +6,9 @@
 
 :root {
 	--space-gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+	--space-sm: 0.5rem;
+	--space-md: 1rem;
+	--space-lg: clamp(1.5rem, 1rem + 2vw, 3rem);
 
 	color-scheme: light dark;
 }
