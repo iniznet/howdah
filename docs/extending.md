@@ -1,0 +1,38 @@
+# Extending
+
+## Adding a feature
+
+A feature is a vertical slice under `app/Features/<Name>/` with a fixed shape:
+
+```
+app/Features/Series/
+  SeriesModule.php          # registers hooks
+  SeriesSchema.php          # CPT, taxonomies, field groups
+  SeriesRepository.php      # the only file with WP_Query
+  SeriesMapper.php          # the only file with WP_Post
+  SeriesData.php            # readonly DTO
+  Surfaces/  Components/
+```
+
+1. Declare data in `<Feature>Schema.php`, with an explicit storage target per field.
+2. Register the module — one line in `app/Bootstrap.php`.
+3. Write the query in `<Feature>Repository.php`. Prime caches there.
+4. Map to a DTO in `<Feature>Mapper.php`.
+5. Compose the page with a Surface and Components; each component gets its own markup file.
+6. Test: unit test every component, integration test the repository and the Surface's query ceiling.
+
+## Adding a dispatch arm
+
+A new request kind is one arm in `Surfaces::resolve()`. The arm must name its Surface, its `Cacheability` and its `FragmentScope` — and an uncacheable arm must state its reason. The dispatch-audit test and the surfaces reference both fail when a declaration is missing, so an arm cannot ship half-declared.
+
+## Adding a hook
+
+Hook names are `public const` on `Hooks` — never inline strings. A new hook is documented first, then added to the inventory; the hook reference gate fails when the generated document is stale. Actions never return; filters always return the first argument. Emit only from Providers and Modules.
+
+## Writing a component
+
+Components render typed props to HTML and nothing else: no data fetching, no globals, no hooks, no `WP_*` types. Each component owns one markup file. Escape exactly once per output.
+
+## Tests a change must add
+
+Every component's rendered output. Every value object's invariant, including rejection. Every repository query shape. Every Surface's query ceiling. Byte-identical output for two anonymous visitors on a shared Surface. If `composer check` passes without a new test, the change was smaller than you think.
