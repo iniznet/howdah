@@ -4,24 +4,191 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Providers;
 
+use Iniznet\Howdah\Admin\FieldWriteFailedNotice;
+use Iniznet\Howdah\Admin\MigrationFailedNotice;
+use Iniznet\Howdah\Admin\MigrationRequiredNotice;
+use Iniznet\Howdah\Admin\MigrationSnapshot;
+use Iniznet\Howdah\Admin\RunMigrations;
+use Iniznet\Howdah\Admin\StatusScreen;
+use Iniznet\Howdah\Features\Fields\FieldPanels;
+use Iniznet\Howdah\Support\Hooks;
+use Iniznet\Howdah\Support\Request;
+use Iniznet\Mahout\Db\MigrationRunner;
+use Iniznet\Mahout\Fields\Admin\FieldEditor;
+use Iniznet\Mahout\Fields\Admin\FieldMetabox;
+use Iniznet\Mahout\Fields\Admin\FieldRestRoute;
+use Iniznet\Mahout\Fields\Admin\FieldSaveHandler;
+use Iniznet\Mahout\Fields\Admin\FieldTypeRegistry;
+use Iniznet\Mahout\Fields\Admin\WriteFailureNotice;
+use Iniznet\Mahout\Fields\Capabilities;
+use Iniznet\Mahout\Fields\Contracts\FieldReader;
+use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
+use Iniznet\Mahout\Fields\Contracts\FieldWriter;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
+use Iniznet\Mahout\Kernel\Diagnostics;
 
 /**
  * The admin seam. Every metabox, menu page, notice and list column the theme
- * registers is named here and nowhere else. The empty theme registers none:
- * attaching the field layer's save handler, the metaboxes and the field route
- * is the admin slice's composition work.
+ * registers is named here and nowhere else. The field layer's panels derive
+ * from the declared FieldPanels collection; the status screen and the
+ * migration notices register unconditionally, because the db package's
+ * migrations exist whether or not a feature has declared a panel.
  */
 final class AdminProvider implements ServiceProvider
 {
     public function register(Container $container): void
     {
-        // The empty theme registers no admin screens.
     }
 
     public function boot(Container $container): void
     {
-        // No admin registration at file scope, and none here yet.
+        $this->bootStatusScreen($container);
+        $this->bootFieldPanels($container);
+    }
+
+    /**
+     * Tools > Site status, its run action, and the two migration notices.
+     * The screen is the operator's window on the schema; the required notice
+     * follows the stored version trailing the code's, and the failed notice
+     * only renders on the request a run failed.
+     */
+    private function bootStatusScreen(Container $container): void
+    {
+        $migrations = new RunMigrations(
+            $container->get(MigrationRunner::class),
+            $container->get(Diagnostics::class),
+        );
+
+        \add_action(
+            Hooks::ADMIN_MENU,
+            static function () use ($container, $migrations): void {
+                $hook = \add_management_page(
+                    \__('Site status', 'howdah'),
+                    \__('Site status', 'howdah'),
+                    'manage_options',
+                    StatusScreen::PAGE_SLUG,
+                    static function () use ($container): void {
+                        $screen = new StatusScreen(
+                            MigrationSnapshot::fromStatus($container->get(MigrationRunner::class)->status()),
+                            self::environmentRows(),
+                        );
+
+                        // Core's page callback is echo-based; the boundary
+                        // echoes renderer output, exactly as index.php does.
+                        echo $screen->render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    },
+                );
+
+                \add_action('load-'.$hook, $migrations->handle(...));
+            },
+            priority: 10,
+            accepted_args: 0,
+        );
+
+        \add_action(
+            Hooks::ADMIN_NOTICES,
+            static function () use ($container, $migrations): void {
+                new MigrationRequiredNotice($container->get(MigrationRunner::class)->schemaVersion())->render();
+                new MigrationFailedNotice($migrations->failureReference())->render();
+            },
+            priority: 10,
+            accepted_args: 0,
+        );
+    }
+
+    /**
+     * The field panels: one metabox per (post type, group) pair inside
+     * add_meta_boxes, gated on edit_post for the object being edited; the
+     * save_post entry through the field package's handler; the value route
+     * and its read bindings for the block editor; and the write-failure
+     * notice. A theme that declares no panels attaches none of this.
+     */
+    private function bootFieldPanels(Container $container): void
+    {
+        /** @var FieldPanels $panels */
+        $panels = $container->get(FieldPanels::class);
+
+        if ($panels->isEmpty()) {
+            return;
+        }
+
+        $registry = $container->get(FieldRegistry::class);
+        $reader = $container->get(FieldReader::class);
+        $writer = $container->get(FieldWriter::class);
+        $diagnostics = $container->get(Diagnostics::class);
+
+        $metabox = new FieldMetabox(
+            new FieldEditor(new FieldTypeRegistry(), $registry, $reader),
+            $registry,
+        );
+
+        $handler = new FieldSaveHandler(
+            Request::panel(),
+            $writer,
+            $registry,
+            $diagnostics,
+        );
+
+        \add_action(
+            Hooks::ADD_META_BOXES,
+            static function (string $postType, \WP_Post $post) use ($panels, $metabox): void {
+                // A panel the user cannot edit the post for is an
+                // information leak; the metabox is not rendered, not just
+                // its values withheld.
+                if (!\current_user_can(Capabilities::EditPost->value, $post->ID)) {
+                    return;
+                }
+
+                foreach ($panels->forPostType($postType) as $panel) {
+                    $metabox->register($panel->postType, $panel->group->id);
+                }
+            },
+            priority: 10,
+            accepted_args: 2,
+        );
+
+        \add_action(Hooks::SAVE_POST, $handler->handle(...), priority: 10, accepted_args: 3);
+
+        \add_action(
+            Hooks::REST_API_INIT,
+            static function () use ($panels, $registry, $writer, $reader, $diagnostics): void {
+                $route = new FieldRestRoute($registry, $writer, $reader, $diagnostics);
+                $route->register();
+
+                foreach ($panels as $panel) {
+                    $route->registerReads(
+                        $panel->postType,
+                        ...\array_map(static fn ($field): string => $field->id, $panel->group->fields),
+                    );
+                }
+            },
+            priority: 10,
+            accepted_args: 0,
+        );
+
+        \add_action(
+            Hooks::ADMIN_NOTICES,
+            static fn () => new FieldWriteFailedNotice(new WriteFailureNotice())->render(),
+            priority: 20,
+            accepted_args: 0,
+        );
+    }
+
+    /**
+     * The environment rows under the migration table: the PHP and WordPress
+     * versions, the fragment cache's group and TTL. Name and value travel as
+     * an untranslated pair, so the markup file stays a dumb loop.
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    private static function environmentRows(): array
+    {
+        return [
+            [\__('PHP version', 'howdah'), PHP_VERSION],
+            ['WordPress', \get_bloginfo('version')],
+            [\__('Fragment cache group', 'howdah'), \Iniznet\Howdah\Render\FragmentCache::GROUP],
+            [\__('Fragment cache TTL', 'howdah'), (string) \Iniznet\Howdah\Render\FragmentCache::TTL_SECONDS],
+        ];
     }
 }

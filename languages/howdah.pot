@@ -8,6 +8,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "X-Domain: howdah\n"
 
+#: app/Admin/markup/status.php:36
+msgid "Applied migrations"
+msgstr ""
+
 #: app/Components/Content/markup/avatar.php:8
 msgid "Avatar of %s"
 msgstr ""
@@ -28,6 +32,10 @@ msgstr ""
 msgid "Older"
 msgstr ""
 
+#: app/Admin/markup/status.php:21
+msgid "Pending migrations"
+msgstr ""
+
 #: app/Components/Forms/markup/form-summary.php:8
 msgid "Please fix the following:"
 msgstr ""
@@ -40,12 +48,28 @@ msgstr ""
 msgid "Reference: %s"
 msgstr ""
 
+#: app/Admin/markup/status.php:12
+msgid "Schema version (code)"
+msgstr ""
+
+#: app/Admin/markup/status.php:16
+msgid "Schema version (stored)"
+msgstr ""
+
+#: app/Admin/markup/status.php:8
+msgid "Site status"
+msgstr ""
+
 #: app/Render/markup/shell-open.php:18
 msgid "Skip to content"
 msgstr ""
 
 #: app/Render/markup/error.php:16
 msgid "Something went wrong."
+msgstr ""
+
+#: app/Admin/markup/status.php:24
+msgid "The stored schema is ahead of the code."
 msgstr ""
 
 #: app/Render/markup/error.php:17
