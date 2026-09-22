@@ -34,6 +34,27 @@ Route a change by the kind of change, not by the file path.
 filed as one change per repository and is not merged until every consumer is on
 the new surface.
 
+## Releasing the theme
+
+The distributable is a zip built by the scaffold's release target.
+
+1. Run `composer check` on the release commit. It must be green; there is no
+   release exception to the gate.
+2. Bump the `Version:` header in `style.css`. It is the single version
+   source: the scaffold reads it from there and names the artefact
+   `howdah-<version>.zip`.
+3. Stage the runtime tree: `composer install --no-dev --classmap-authoritative
+   --optimize-autoloader` in a release checkout. There is no Packagist lane,
+   so the runtime autoloader and the `mahout-*` packages ship inside the zip;
+   the dev tooling must not.
+4. Build: `vendor/bin/mahout release howdah` (or the scaffold checkout's
+   `bin/mahout`). Tests, tasks, planning docs, `node_modules`, the build
+   output, dot-directories and source maps are excluded by the scaffold's
+   family defaults; a call may only add exclusions, never subtract.
+5. Files land under `howdah/` in the archive -- WordPress's expected install
+   layout. Tag the release; the tag is the release (rule 1 of
+   `15-operations-and-conventions.md`).
+
 ## Before you write code
 
 - Ask the five questions in [AGENTS.md](AGENTS.md): where does this go, will it
