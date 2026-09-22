@@ -167,6 +167,31 @@ final class Hooks
     public const string REST_API_INIT = 'rest_api_init';
 
     /**
+     * Core's list-screen filter-dropdown action. The declared panels' Choice
+     * filters render here, one dropdown per filterable field.
+     *
+     * @since 1.0
+     *
+     * @action
+     *
+     * @param string $postType the list screen's post type
+     * @param string $taxonomy the screen's taxonomy, when one is being filtered
+     */
+    public const string RESTRICT_MANAGE_POSTS = 'restrict_manage_posts';
+
+    /**
+     * Core's query-integration action, where the declared panels' field
+     * filters narrow the main list query through the bounded statement.
+     *
+     * @since 1.0
+     *
+     * @action
+     *
+     * @param \WP_Query $query the query being assembled
+     */
+    public const string PRE_GET_POSTS = 'pre_get_posts';
+
+    /**
      * Core's post-save action. FragmentInvalidation observes it, skips
      * autosaves and revisions, bumps the fragment group once per request and
      * fires the purge seam once. The field layer's save handler observes it

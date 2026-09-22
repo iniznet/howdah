@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Providers;
 
+use Iniznet\Howdah\Admin\ContentModelColumns;
 use Iniznet\Howdah\Admin\FieldWriteFailedNotice;
 use Iniznet\Howdah\Admin\MigrationFailedNotice;
 use Iniznet\Howdah\Admin\MigrationRequiredNotice;
 use Iniznet\Howdah\Admin\MigrationSnapshot;
 use Iniznet\Howdah\Admin\RunMigrations;
 use Iniznet\Howdah\Admin\StatusScreen;
+use Iniznet\Howdah\Admin\ThemeSettingsScreen;
+use Iniznet\Howdah\Exception\InvalidDisplayOption;
 use Iniznet\Howdah\Features\Fields\FieldPanels;
+use Iniznet\Howdah\Features\Settings\DisplayOption;
+use Iniznet\Howdah\Features\Settings\DisplayOptions;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Support\Request;
+use Iniznet\Mahout\Db\Contracts\SqlConnection;
 use Iniznet\Mahout\Db\MigrationRunner;
 use Iniznet\Mahout\Fields\Admin\FieldEditor;
 use Iniznet\Mahout\Fields\Admin\FieldMetabox;
@@ -39,12 +45,66 @@ final class AdminProvider implements ServiceProvider
 {
     public function register(Container $container): void
     {
+        $declarations = require dirname(__DIR__, 2).'/config/display-options.php';
+
+        if (!\is_array($declarations)) {
+            throw InvalidDisplayOption::forType(\get_debug_type($declarations));
+        }
+
+        $options = [];
+
+        foreach ($declarations as $declaration) {
+            if (!$declaration instanceof DisplayOption) {
+                throw InvalidDisplayOption::forType(\get_debug_type($declaration));
+            }
+
+            $options[] = $declaration;
+        }
+
+        $container->set(new DisplayOptions($options), DisplayOptions::class);
     }
 
     public function boot(Container $container): void
     {
         $this->bootStatusScreen($container);
+        $this->bootThemeSettings($container);
         $this->bootFieldPanels($container);
+    }
+
+    /**
+     * Appearance > Theme settings, behind the theme's own edit_theme_options
+     * capability. The screen registers only when the theme declares display
+     * options; the optionless starter ships no page.
+     */
+    private function bootThemeSettings(Container $container): void
+    {
+        /** @var DisplayOptions $options */
+        $options = $container->get(DisplayOptions::class);
+
+        if ($options->isEmpty()) {
+            return;
+        }
+
+        $screen = new ThemeSettingsScreen($options, $container->get(Diagnostics::class));
+
+        \add_action(
+            Hooks::ADMIN_MENU,
+            static function () use ($screen): void {
+                $hook = \add_theme_page(
+                    \__('Theme settings', 'howdah'),
+                    \__('Theme settings', 'howdah'),
+                    \Iniznet\Howdah\Support\Capabilities::EditThemeOptions->value,
+                    ThemeSettingsScreen::PAGE_SLUG,
+                    static function () use ($screen): void {
+                        echo $screen->render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    },
+                );
+
+                \add_action('load-'.$hook, $screen->handleSave(...));
+            },
+            priority: 10,
+            accepted_args: 0,
+        );
     }
 
     /**
@@ -173,6 +233,31 @@ final class AdminProvider implements ServiceProvider
             priority: 20,
             accepted_args: 0,
         );
+
+        $this->bootListColumns($container, $panels);
+    }
+
+    /**
+     * The declared panels' read-only list-screen presence: one column per
+     * Table-stored field and one filter dropdown per Choice field, built on
+     * the field query builder's bounded statement. The columns write
+     * nothing; the listing the user already reaches gates the read.
+     */
+    private function bootListColumns(Container $container, FieldPanels $panels): void
+    {
+        $connection = $container->get(SqlConnection::class);
+
+        $columns = new ContentModelColumns(
+            $panels,
+            $container->get(FieldReader::class),
+            new \Iniznet\Mahout\Fields\FieldQuery(
+                $container->get(FieldRegistry::class),
+                $connection,
+                \Iniznet\Mahout\Fields\FieldValuesTable::table($connection->prefix(), $connection->charsetCollate()),
+            ),
+        );
+
+        \add_action(Hooks::INIT, $columns->register(...), priority: 10, accepted_args: 0);
     }
 
     /**

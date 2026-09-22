@@ -76,6 +76,10 @@ msgstr ""
 msgid "The support reference for this failure is %s."
 msgstr ""
 
+#: app/Admin/markup/theme-settings.php:8
+msgid "Theme settings"
+msgstr ""
+
 #. translators: %s: the current year.
 #: app/Components/Navigation/markup/site-footer.php:11
 msgid "© %s"

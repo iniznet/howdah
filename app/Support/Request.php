@@ -18,6 +18,8 @@ final readonly class Request
     private function __construct(
         public string $method,
         public ?string $ifNoneMatch,
+        /** @var array<string, mixed> */
+        private array $query,
     ) {
     }
 
@@ -31,7 +33,22 @@ final readonly class Request
             ? \trim($_SERVER['HTTP_IF_NONE_MATCH'])
             : null;
 
-        return new self($method, $ifNoneMatch);
+        /** @var array<string, mixed> $query */
+        $query = \wp_unslash($_GET);
+
+        return new self($method, $ifNoneMatch, $query);
+    }
+
+    /**
+     * A submitted query-string scalar, unslashed; null when the key is
+     * absent. The admin list screen's field filters read through here, never
+     * through $_GET at the call site.
+     */
+    public function query(string $key): ?string
+    {
+        $value = $this->query[$key] ?? null;
+
+        return \is_string($value) ? $value : null;
     }
 
     /**

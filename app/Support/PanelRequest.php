@@ -57,6 +57,25 @@ final readonly class PanelRequest implements RequestInput
         return $this->arraysOf(Nonces::valueField());
     }
 
+    /**
+     * One named value out of a submitted two-level form field -- the admin
+     * settings form's field, whose keys are option ids rather than group
+     * ids. The theme's own forms read through here; the field package's save
+     * boundary keeps reading through the contract's methods.
+     */
+    public function value(string $field, string $key): ?string
+    {
+        $raw = $this->post[$field] ?? null;
+
+        if (!\is_array($raw)) {
+            return null;
+        }
+
+        $value = $raw[$key] ?? null;
+
+        return \is_string($value) ? $value : null;
+    }
+
     #[\Override]
     public function hashes(): array
     {
