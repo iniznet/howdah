@@ -10,10 +10,6 @@ use Iniznet\Howdah\Admin\MigrationRequiredNotice;
 use Iniznet\Howdah\Admin\MigrationSnapshot;
 use Iniznet\Howdah\Admin\RunMigrations;
 use Iniznet\Howdah\Admin\StatusScreen;
-use Iniznet\Howdah\Admin\ThemeSettingsScreen;
-use Iniznet\Howdah\Exception\InvalidDisplayOption;
-use Iniznet\Howdah\Features\Settings\DisplayOption;
-use Iniznet\Howdah\Features\Settings\DisplayOptions;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Mahout\Db\Contracts\SqlConnection;
 use Iniznet\Mahout\Db\MigrationRunner;
@@ -29,76 +25,28 @@ use Iniznet\Mahout\Kernel\Diagnostics;
 /**
  * The admin seam. Every menu page, notice and list column the theme registers
  * is named here and nowhere else. The field layer's screens are not: they are
- * derived from the declared panels by `mahout-fields`' Admin\FieldsUiProvider
- * and registered by the composition root, so the one question this provider
- * answers is "what admin surface does the theme itself own". The status screen
- * and the migration notices register unconditionally, because the db package's
- * migrations exist whether or not a feature has declared a panel.
+ * derived from the declared panels and option screens by `mahout-fields`'
+ * Admin\FieldsUiProvider and registered by the composition root, so the one
+ * question this provider answers is "what admin surface does the theme itself
+ * own". The status screen and the migration notices register unconditionally,
+ * because the db package's migrations exist whether or not a feature has
+ * declared a panel.
  */
 final class AdminProvider implements ServiceProvider
 {
     public function register(Container $container): void
     {
-        $declarations = require dirname(__DIR__, 2).'/config/display-options.php';
-
-        if (!\is_array($declarations)) {
-            throw InvalidDisplayOption::forType(\get_debug_type($declarations));
-        }
-
-        $options = [];
-
-        foreach ($declarations as $declaration) {
-            if (!$declaration instanceof DisplayOption) {
-                throw InvalidDisplayOption::forType(\get_debug_type($declaration));
-            }
-
-            $options[] = $declaration;
-        }
-
-        $container->set(new DisplayOptions($options), DisplayOptions::class);
+        // The theme declares no service here: the status screen and the
+        // notices attach in boot(), the list columns read the panels the
+        // editor seam binds, and the settings pages the theme may declare
+        // are the editor seam's OptionScreens, derived by the field
+        // package's provider.
     }
 
     public function boot(Container $container): void
     {
         $this->bootStatusScreen($container);
-        $this->bootThemeSettings($container);
         $this->bootListColumns($container);
-    }
-
-    /**
-     * Appearance > Theme settings, behind the theme's own edit_theme_options
-     * capability. The screen registers only when the theme declares display
-     * options; the optionless starter ships no page.
-     */
-    private function bootThemeSettings(Container $container): void
-    {
-        /** @var DisplayOptions $options */
-        $options = $container->get(DisplayOptions::class);
-
-        if ($options->isEmpty()) {
-            return;
-        }
-
-        $screen = new ThemeSettingsScreen($options, $container->get(Diagnostics::class));
-
-        \add_action(
-            Hooks::ADMIN_MENU,
-            static function () use ($screen): void {
-                $hook = \add_theme_page(
-                    \__('Theme settings', 'howdah'),
-                    \__('Theme settings', 'howdah'),
-                    \Iniznet\Howdah\Support\Capabilities::EditThemeOptions->value,
-                    ThemeSettingsScreen::PAGE_SLUG,
-                    static function () use ($screen): void {
-                        echo $screen->render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    },
-                );
-
-                \add_action('load-'.$hook, $screen->handleSave(...));
-            },
-            priority: 10,
-            accepted_args: 0,
-        );
     }
 
     /**

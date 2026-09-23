@@ -8,8 +8,8 @@ use Iniznet\Howdah\Admin\ContentModelColumns;
 use Iniznet\Howdah\Admin\MigrationFailedNotice;
 use Iniznet\Howdah\Admin\MigrationRequiredNotice;
 use Iniznet\Howdah\Admin\StatusScreen;
-use Iniznet\Howdah\Admin\ThemeSettingsScreen;
 use Iniznet\Mahout\Fields\Admin\FieldMetabox;
+use Iniznet\Mahout\Fields\Admin\OptionScreenManager;
 use Iniznet\Mahout\Fields\Admin\WriteFailureNoticeRenderer;
 use PHPUnit\Framework\TestCase;
 
@@ -28,7 +28,7 @@ final class AdminSurfacesTest extends TestCase
         return [
             'FieldPanel (metabox composition)' => FieldMetabox::class,
             'ContentModelColumns' => ContentModelColumns::class,
-            'ThemeSettingsScreen' => ThemeSettingsScreen::class,
+            'OptionScreen (derived settings page)' => OptionScreenManager::class,
             'StatusScreen' => StatusScreen::class,
             'FieldWriteFailedNotice' => WriteFailureNoticeRenderer::class,
             'MigrationRequiredNotice' => MigrationRequiredNotice::class,

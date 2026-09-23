@@ -32,7 +32,3 @@ msgstr ""
 msgid "The stored schema is ahead of the code."
 msgstr ""
 
-#: app/Admin/markup/theme-settings.php:8
-msgid "Theme settings"
-msgstr ""
-

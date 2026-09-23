@@ -41,11 +41,20 @@ order. The format follows Semantic Versioning; a major entry names each removal.
 - The field layer's admin screens are derived, not hand-attached.
   `mahout-fields`' `Admin\FieldsUiProvider` turns the theme's `Contracts\Panels`
   binding into the metaboxes, the save entry, the route reads and the
-  write-failure notice, and attaches none of them for a theme that declares no
-  panel. `AdminProvider` names only the admin surface the theme owns: the
-  settings screen, the status screen, the migration notices and the list
-  columns. The notice's string moved to the `mahout-fields` text domain, so the
-  theme's POT lost that entry.
+  write-failure notice, and the theme's `Contracts\OptionScreens` binding into
+  the settings pages, their save entries and their notices — attaching none of
+  them for a theme that declares neither. `AdminProvider` names only the admin
+  surface the theme owns: the status screen, the migration notices and the
+  list columns. The notice's string moved to the `mahout-fields` text domain,
+  so the theme's POT lost that entry.
+- The theme's hand-rolled display options are gone — the screen, its nonce
+  and sanitising, the `howdah_` option keys and their exception — because
+  `mahout-fields`' option screen is the one settings surface:
+  config/display-options.php declares `OptionScreen` values, the editor seam
+  binds them under the package's `Contracts\OptionScreens`, and a declared
+  screen's values reach `wp_options` under the package's own key. The starter
+  declares none, and `Capabilities::EditThemeOptions` went with the screen it
+  gated.
 - The theme's own copies of `SearchTerms`, `MatchClause`, `FieldPanel`,
   `FieldWriteFailedNotice` and `Support\Cache\HeaderPolicy` are gone, with the
   four hook constants and the three named exception constructors that existed

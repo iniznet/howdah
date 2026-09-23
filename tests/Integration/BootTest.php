@@ -30,6 +30,7 @@ final class BootTest extends \WP_UnitTestCase
             \Iniznet\Mahout\Fields\Contracts\FieldRegistry::class,
             \Iniznet\Mahout\Fields\Contracts\FieldReader::class,
             \Iniznet\Mahout\Fields\Contracts\FieldWriter::class,
+            \Iniznet\Mahout\Fields\Contracts\OptionScreens::class,
             \Iniznet\Mahout\Fields\Contracts\Panels::class,
             \Iniznet\Mahout\Fields\Contracts\RequestInput::class,
             \Iniznet\Mahout\Ui\ClassResolver::class,

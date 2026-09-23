@@ -6,30 +6,39 @@ namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidFieldDeclaration;
 use Iniznet\Howdah\Features\Fields\FieldPanels;
+use Iniznet\Howdah\Features\Fields\OptionScreens;
 use Iniznet\Howdah\Support\Request;
 use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
+use Iniznet\Mahout\Fields\Contracts\OptionScreens as OptionScreensContract;
 use Iniznet\Mahout\Fields\Contracts\Panels;
 use Iniznet\Mahout\Fields\Contracts\RequestInput;
 use Iniznet\Mahout\Fields\FieldPanel;
 use Iniznet\Mahout\Fields\Hooks as FieldHooks;
+use Iniznet\Mahout\Fields\OptionScreen;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
 
 /**
  * The editor seam. A feature's schema declares its field groups in
- * config/fields.php, one FieldPanel per (post type, group) pair; this provider
- * loads that declaration, registers each group on the field package's
- * registry, and hands the collection to the container under the package's
- * Panels contract. `mahout-fields`' Admin\FieldsUiProvider — registered after
- * FieldsProvider by the composition root — turns that declaration into the
- * metaboxes, the save entry, the REST read bindings and the write-failure
- * notice, and attaches none of them when the declaration is empty. The empty
- * theme declares no panels.
+ * config/fields.php, one FieldPanel per (post type, group) pair, and its
+ * settings screens in config/display-options.php, one OptionScreen per
+ * option-context group; this provider loads both declarations, registers
+ * each group on the field package's registry, and hands the collections to
+ * the container under the package's Panels and OptionScreens contracts.
+ * `mahout-fields`' Admin\FieldsUiProvider — registered after FieldsProvider
+ * by the composition root — turns the panels into the metaboxes, the save
+ * entry, the REST read bindings and the write-failure notice, and the option
+ * screens into the settings pages, their save entries and their notices, and
+ * attaches none of them when a declaration is empty. The empty theme
+ * declares neither.
  */
 final class EditorProvider implements ServiceProvider
 {
     /** @var list<FieldPanel> */
     private array $panels = [];
+
+    /** @var list<OptionScreen> */
+    private array $optionScreens = [];
 
     public function register(Container $container): void
     {
@@ -49,13 +58,33 @@ final class EditorProvider implements ServiceProvider
             $panels[] = $declaration;
         }
 
+        $optionDeclarations = require dirname(__DIR__, 2).'/config/display-options.php';
+
+        if (!\is_array($optionDeclarations)) {
+            throw InvalidFieldDeclaration::forOptionScreenType(\get_debug_type($optionDeclarations));
+        }
+
+        $screens = [];
+
+        foreach ($optionDeclarations as $declaration) {
+            if (!$declaration instanceof OptionScreen) {
+                throw InvalidFieldDeclaration::forOptionScreenType(\get_debug_type($declaration));
+            }
+
+            $screens[] = $declaration;
+        }
+
         $this->panels = $panels;
+        $this->optionScreens = $screens;
+
         $collection = new FieldPanels($panels);
 
-        // The contract id, not the concrete class: every consumer — this
+        // The contract ids, not the concrete classes: every consumer — this
         // theme's list columns and the package's admin UI — resolves panels
-        // through Panels, so there is exactly one key to grep for.
+        // and option screens through the package's contracts, so there is
+        // exactly one key to grep for.
         $container->set($collection, Panels::class);
+        $container->set(new OptionScreens($screens), OptionScreensContract::class);
 
         // The save boundary reads the submitted panel through the package's
         // RequestInput contract; the superglobal is read in Support\Request
@@ -69,6 +98,10 @@ final class EditorProvider implements ServiceProvider
             function (FieldRegistry $registry): void {
                 foreach ($this->panels as $panel) {
                     $registry->register($panel->group);
+                }
+
+                foreach ($this->optionScreens as $screen) {
+                    $registry->register($screen->group);
                 }
             },
             priority: 10,
