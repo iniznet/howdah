@@ -1,18 +1,18 @@
 <?php
 
 /**
- * The content repository: the only file in the theme with WP_Query, and the
- * only reader of core content. Every query is hardened — no found rows, no
- * core meta or term caching, sticky posts ignored, ids only, one page of
- * per-page + 1 rows so no pagination count query is ever issued — and every
- * result set is primed before it is mapped.
+ * The content repository: the theme's only reader of core content, and the
+ * only place a request's intent becomes a query. The mechanics -- the
+ * hardened WP_Query shape, the peek pagination, the priming -- belong to
+ * mahout-content's {@see PostReader}; this file composes a {@see QuerySpec}
+ * per intent and maps the primed rows to the theme's DTOs.
  *
  * Search is the indexed path when the FULLTEXT index is present (SRCH-01).
- * The declaration — the clause, the relevance ordering and the query vars
- * that carry them — is `mahout-db`'s {@see IndexedSearchSwap}, so this file
+ * The declaration -- the clause, the relevance ordering and the query vars
+ * that carry them -- is `mahout-db`'s {@see IndexedSearchSwap}, so this file
  * states no search grammar. With the index absent the swap answers with
  * core's own search args, the LIKE path runs unchanged, and the absence is
- * recorded loudly by the package's fallback report — once per request.
+ * recorded loudly by the package's fallback report -- once per request.
  */
 
 declare(strict_types=1);
@@ -20,16 +20,17 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Features\Content;
 
 use Iniznet\Mahout\Content\PostData;
+use Iniznet\Mahout\Content\PostList;
+use Iniznet\Mahout\Content\PostReader;
+use Iniznet\Mahout\Content\QuerySpec;
 use Iniznet\Mahout\Db\Search\IndexedSearchSwap;
 use Iniznet\Mahout\Db\Search\SearchTerms;
 
 final readonly class ContentRepository
 {
-    /** The declared per-request cap. Never -1, never unbounded. */
-    public const int PER_PAGE_CAP = 50;
-
     public function __construct(
         private PostMapper $mapper,
+        private PostReader $reader,
         private IndexedSearchSwap $search,
     ) {
     }
@@ -72,7 +73,7 @@ final readonly class ContentRepository
             'tax_query' => [[
                 'taxonomy' => (string) $term->taxonomy,
                 'field' => 'term_id',
-                'terms' => [$termId],
+                'terms' => $termId,
             ]],
         ], $page);
     }
@@ -106,8 +107,8 @@ final readonly class ContentRepository
 
     /**
      * Whether the search query travels the indexed path. The fallback
-     * (core's own LIKE query) is core's query, unchanged; its absence is
-     * recorded by the swap's own once-per-request report, not silently here.
+     * (core's own LIKE query) is core's query, unchanged; its cost is
+     * reported by the Surface that renders it, not silently here.
      */
     public function searchIsIndexed(): bool
     {
@@ -158,133 +159,55 @@ final readonly class ContentRepository
     }
 
     /**
+     * The singular intent: one row, fully mapped.
+     *
      * @param array<string, mixed> $args
      */
     private function singular(array $args, int $page): ?PostData
     {
-        $query = $this->run($args, 1, 0);
-        $ids = $this->ids($query);
+        $rows = $this->reader->fetch(new QuerySpec(
+            filters: $args,
+            perPage: 1,
+        ));
 
-        if ([] === $ids) {
-            return null;
-        }
-
-        \_prime_post_caches($ids, false, true);
-        $this->primeTerms($ids);
-        $this->primeAuthors($ids);
-
-        $post = \get_post($ids[0]);
+        $post = $rows->posts[0] ?? null;
 
         return $post instanceof \WP_Post ? $this->mapper->post($post, $page) : null;
     }
 
     /**
+     * The listing intent: the site's page size, the reader's peek, the
+     * theme's teaser mapping.
+     *
      * @param array<string, mixed> $filters
      */
     private function listing(array $filters, int $page): PostList
     {
         $perPage = $this->perPage();
-        $query = $this->run($filters, $perPage + 1, ($page - 1) * $perPage);
-        $ids = $this->ids($query);
-
-        $hasMore = \count($ids) > $perPage;
-        $ids = \array_slice($ids, 0, $perPage);
-
-        if ([] === $ids) {
-            return new PostList([], false);
-        }
-
-        \_prime_post_caches($ids, false, true);
-        $this->primeTerms($ids);
-        $this->primeAuthors($ids);
+        $rows = $this->reader->fetch(new QuerySpec(
+            filters: $filters,
+            perPage: $perPage,
+            offset: ($page - 1) * $perPage,
+        ));
 
         $items = [];
 
-        foreach ($ids as $id) {
-            $post = \get_post($id);
-
-            if ($post instanceof \WP_Post) {
-                $items[] = $this->mapper->teaser($post);
-            }
+        foreach ($rows->posts as $post) {
+            $items[] = $this->mapper->teaser($post);
         }
 
-        return new PostList($items, $hasMore);
+        return new PostList($items, $rows->hasMore);
     }
 
     /**
-     * The hardened defaults, merged under the kind's own filters. The peek
-     * asks for one row more than the page shows; that row decides hasMore
-     * without a count query.
-     *
-     * @param array<string, mixed> $filters
+     * The site's own page size, as the editor set it. The per-request cap is
+     * the reader's bound; the option is the site's declaration.
      */
-    private function run(array $filters, int $perPage, int $offset): \WP_Query
-    {
-        return new \WP_Query([
-            'post_status' => 'publish',
-            'posts_per_page' => $perPage,
-            'offset' => $offset,
-            'no_found_rows' => true,
-            'update_post_meta_cache' => false,
-            'update_post_term_cache' => false,
-            'ignore_sticky_posts' => true,
-            'fields' => 'ids',
-        ] + $filters);
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function ids(\WP_Query $query): array
-    {
-        $ids = [];
-
-        foreach ($query->posts ?? [] as $id) {
-            if (\is_numeric($id)) {
-                $ids[] = (int) $id;
-            }
-        }
-
-        return $ids;
-    }
-
-    /**
-     * The terms every mapped teaser or post renders, primed in one query.
-     *
-     * @param list<int> $ids
-     */
-    private function primeTerms(array $ids): void
-    {
-        \update_object_term_cache($ids, 'post');
-    }
-
-    /**
-     * The authors every mapped teaser or post renders, primed in one query.
-     *
-     * @param list<int> $ids
-     */
-    private function primeAuthors(array $ids): void
-    {
-        $authors = [];
-
-        foreach ($ids as $id) {
-            $post = \get_post($id);
-
-            if ($post instanceof \WP_Post && (int) $post->post_author > 0) {
-                $authors[(int) $post->post_author] = true;
-            }
-        }
-
-        if ([] !== $authors) {
-            \cache_users(\array_keys($authors));
-        }
-    }
-
     private function perPage(): int
     {
         $option = \get_option('posts_per_page', 10);
         $perPage = \is_numeric($option) ? (int) $option : 10;
 
-        return \max(1, \min(self::PER_PAGE_CAP, $perPage));
+        return \max(1, $perPage);
     }
 }

@@ -27,6 +27,7 @@ use Iniznet\Howdah\Features\Content\PostMapper;
 use Iniznet\Howdah\Support\Cache\FragmentInvalidation;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Mahout\Content\Contracts\Registrar;
+use Iniznet\Mahout\Content\PostReader;
 use Iniznet\Mahout\Content\PostType;
 use Iniznet\Mahout\Content\RestRoute;
 use Iniznet\Mahout\Content\Taxonomy;
@@ -66,6 +67,7 @@ final class ContentProvider implements ServiceProvider
 
         $container->set(new ContentRepository(
             mapper: new PostMapper(),
+            reader: new PostReader(),
             search: $container->get(IndexedSearchSwap::class),
         ));
 

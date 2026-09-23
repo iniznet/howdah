@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Features\Content\PostList;
+use Iniznet\Mahout\Content\PostList;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Render\QueryContext;

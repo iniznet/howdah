@@ -6,6 +6,7 @@ namespace Iniznet\Howdah\Tests\Integration;
 
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Howdah\Features\Content\ContentRepository;
+use Iniznet\Mahout\Content\PostReader;
 
 /**
  * The repository's query shapes over core post types, on a real database:
@@ -106,7 +107,7 @@ final class ContentRepositoryTest extends \WP_UnitTestCase
 
     public function testThePerRequestCapIsDeclaredAndBounded(): void
     {
-        self::assertSame(50, ContentRepository::PER_PAGE_CAP, 'the declared cap: never -1, never unbounded.');
+        self::assertSame(50, PostReader::PER_PAGE_CAP, 'the declared cap: never -1, never unbounded.');
     }
 
     public function testLabelsAreResolvedByTheirId(): void
