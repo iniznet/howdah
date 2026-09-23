@@ -23,7 +23,7 @@ app/Features/Series/
 
 ## Adding a dispatch arm
 
-A new request kind is one arm in `Surfaces::resolve()`. The arm must name its Surface, its `Cacheability` and its `FragmentScope` — and an uncacheable arm must state its reason. The dispatch-audit test and the surfaces reference both fail when a declaration is missing, so an arm cannot ship half-declared.
+A new request kind is one arm in `Surfaces::resolve()`, written with `mahout-render`'s `SurfacePlanBuilder`: `->surface(static fn (): Component => new MySurface(...))` then one terminal. `shared($key)` declares the Shared pair, `uncacheable($reason)` declares the pair that stores nothing and must say why, and `guardOverflow($reason)->shared($key)` is a listing arm's second path — the same Surface, uncacheable and stated, beyond the last page the content graph holds. A class other than `Shared` is an arm that names its `Cacheability` and its `FragmentScope` as arguments to `SurfacePlan::wrapped()`. The dispatch-audit test and the surfaces reference both fail when an arm reaches no terminal, so an arm cannot ship half-declared.
 
 ## Adding a hook
 

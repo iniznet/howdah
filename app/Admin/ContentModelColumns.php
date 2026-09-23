@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Admin;
 
-use Iniznet\Howdah\Features\Fields\FieldPanel;
-use Iniznet\Howdah\Features\Fields\FieldPanels;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Support\Request;
 use Iniznet\Mahout\Fields\ChoiceField;
 use Iniznet\Mahout\Fields\Contracts\FieldQuery;
 use Iniznet\Mahout\Fields\Contracts\FieldReader;
+use Iniznet\Mahout\Fields\Contracts\Panels;
+use Iniznet\Mahout\Fields\FieldPanel;
 use Iniznet\Mahout\Fields\FieldType;
 use Iniznet\Mahout\Fields\ObjectRef;
 use Iniznet\Mahout\Fields\Operator;
@@ -35,7 +35,7 @@ final readonly class ContentModelColumns
     private const int FILTER_LIMIT = 1000;
 
     public function __construct(
-        private FieldPanels $panels,
+        private Panels $panels,
         private FieldReader $reader,
         private FieldQuery $query,
     ) {

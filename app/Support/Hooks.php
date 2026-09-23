@@ -120,20 +120,6 @@ final class Hooks
     public const string PURGE = 'howdah/cache/purge';
 
     /**
-     * Core's metabox registration action. The field layer's metaboxes attach
-     * here, per declared panel, so the registration is a named call inside a
-     * listener and never a file-scope add_meta_box.
-     *
-     * @since 1.0
-     *
-     * @action
-     *
-     * @param string   $postType the screen's post type
-     * @param \WP_Post $post     the post the editor is rendering
-     */
-    public const string ADD_META_BOXES = 'add_meta_boxes';
-
-    /**
      * Core's admin-menu action, where the status screen's management page
      * registers. It fires once per admin request, before the page's load
      * hook, so the screen and its run action are named in one listener.
@@ -145,25 +131,17 @@ final class Hooks
     public const string ADMIN_MENU = 'admin_menu';
 
     /**
-     * Core's admin notice action, which the migration and field-write
-     * notices observe. It fires once per admin screen render, after the
-     * screen's load hook, so a same-request failure state is already known.
+     * Core's admin notice action, which the migration notices observe. It
+     * fires once per admin screen render, after the screen's load hook, so a
+     * same-request failure state is already known. The field layer's own
+     * write-failure notice observes the same action, attached by the field
+     * package's admin provider at priority 20 — behind the screens' messages.
      *
      * @since 1.0
      *
      * @action
      */
     public const string ADMIN_NOTICES = 'admin_notices';
-
-    /**
-     * Core's REST API initialisation, where the field package's value route
-     * and its per-post-type read bindings register.
-     *
-     * @since 1.0
-     *
-     * @action
-     */
-    public const string REST_API_INIT = 'rest_api_init';
 
     /**
      * WP-CLI's registration action, fired before WP-CLI dispatches. The
@@ -205,7 +183,8 @@ final class Hooks
      * Core's post-save action. FragmentInvalidation observes it, skips
      * autosaves and revisions, bumps the fragment group once per request and
      * fires the purge seam once. The field layer's save handler observes it
-     * at priority 10, per declared panel.
+     * at priority 10, per declared panel, through the field package's own
+     * hook constant.
      *
      * @since 1.0
      *
@@ -256,36 +235,4 @@ final class Hooks
      * @param list<\Iniznet\Mahout\Db\Contracts\Migration> $migrations the declared migrations, in order
      */
     public const string MIGRATIONS = 'mahout/db/migrations';
-
-    /**
-     * Core's search-fragment filter, inside WP_Query::get_posts(). The search
-     * repository builds the FULLTEXT clause and travels it on the query vars;
-     * this filter swaps it in only for a query that declared the indexed path
-     * and returns its first argument otherwise.
-     * repository builds the FULLTEXT clause and travels it on the query vars;
-     * this filter swaps it in only for a query that declared the indexed path
-     * and returns its first argument otherwise.
-     *
-     * @since 1.0
-     *
-     * @filter
-     *
-     * @param string    $search the search fragment core built
-     * @param \WP_Query $query  the running query
-     */
-    public const string POSTS_SEARCH = 'posts_search';
-
-    /**
-     * Core's search-ordering filter, in the same query as POSTS_SEARCH. The
-     * repository's relevance expression replaces core's title-match CASE for
-     * an indexed search only.
-     *
-     * @since 1.0
-     *
-     * @filter
-     *
-     * @param string    $orderby the ordering core built
-     * @param \WP_Query $query   the running query
-     */
-    public const string POSTS_SEARCH_ORDERBY = 'posts_search_orderby';
 }

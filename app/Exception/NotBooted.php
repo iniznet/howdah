@@ -22,9 +22,4 @@ final class NotBooted extends \LogicException implements ThemeException
     {
         return new self('The render boundary was reached before Bootstrap::run() booted the kernel.');
     }
-
-    public static function beforeQuery(): self
-    {
-        return new self('The request context was read before WordPress resolved a query.');
-    }
 }

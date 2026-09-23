@@ -1,11 +1,28 @@
 <?php
 
+/**
+ * The render pipeline's composition: the fragment store is bound here, and
+ * the wp_headers listener resolves the request's SurfacePlan once — at
+ * send_headers time, after WP::main() has run the main query and before any
+ * body exists.
+ *
+ * The response's own mechanics are `mahout-render`'s: `Cache\HeaderPolicy`
+ * derives the class the declaration implies from the request state,
+ * `Cache\ResponseHeaders` narrows core's payload and merges the policy over
+ * it, and `Cache\ConditionalGet` answers a matching `If-None-Match` with a
+ * `304`. What stays here is the theme's: the derivation is recorded when
+ * request state reduced the declared class, because a downgrade the operator
+ * cannot see is a silent fallback.
+ *
+ * Feeds, robots and favicon responses are core paths and are skipped: the
+ * theme declares nothing for a response it does not render.
+ */
+
 declare(strict_types=1);
 
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidHookResult;
-use Iniznet\Howdah\Support\Cache\HeaderPolicy;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Support\Request;
 use Iniznet\Howdah\Surfaces\Surfaces;
@@ -14,21 +31,13 @@ use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
 use Iniznet\Mahout\Kernel\Diagnostics;
 use Iniznet\Mahout\Kernel\Environment;
 use Iniznet\Mahout\Kernel\Level;
+use Iniznet\Mahout\Render\Cache\ConditionalGet;
+use Iniznet\Mahout\Render\Cache\HeaderPolicy;
+use Iniznet\Mahout\Render\Cache\ResponseHeaders;
 use Iniznet\Mahout\Render\Cacheability;
 use Iniznet\Mahout\Render\FragmentCache;
-use Iniznet\Mahout\Render\FragmentKey;
 use Iniznet\Mahout\Render\QueryContext;
 
-/**
- * The render pipeline's composition: the fragment store is bound here, and
- * the wp_headers listener resolves the request's SurfacePlan once — at
- * send_headers time, after WP::main() has run the main query and before any
- * body exists — merges the HeaderPolicy's headers into core's, and leaves
- * the plan memoised for the render phase.
- *
- * Feeds, robots and favicon responses are core paths and are skipped: the
- * theme declares nothing for a response it does not render.
- */
 final class RenderProvider implements ServiceProvider
 {
     public function register(Container $container): void
@@ -43,7 +52,8 @@ final class RenderProvider implements ServiceProvider
 
     /**
      * Core's header filter payload, narrowed at the boundary, then the
-     * declared policy merged into it.
+     * declared policy merged over it — core first, the policy last, so no
+     * subscriber can widen a response the class bounded.
      *
      * @return array<string, string|false>
      */
@@ -53,7 +63,7 @@ final class RenderProvider implements ServiceProvider
             throw InvalidHookResult::notAHeaderMap();
         }
 
-        $merged = self::narrow($headers);
+        $merged = ResponseHeaders::narrow($headers);
 
         if (!self::rendersThroughTheTheme()) {
             return $merged;
@@ -72,48 +82,13 @@ final class RenderProvider implements ServiceProvider
 
         self::recordReduction($container, $plan->cacheability, $policy->effective);
 
-        $validators = $policy->emitsValidators() && null !== $plan->key;
+        $conditional = new ConditionalGet($policy, $plan->key, $request->ifNoneMatch);
 
-        if ($validators && self::conditionalHit($request->ifNoneMatch, self::etag($plan->key))) {
-            \status_header(304);
+        if ($conditional->answerNotModified()) {
             exit;
         }
 
-        return [...$merged, ...$policy->headers()];
-    }
-
-    /**
-     * Core's documented shape is array<string, string|false>. Anything else
-     * a subscriber added is refused, never coerced.
-     *
-     * @param array<mixed, mixed> $headers
-     *
-     * @return array<string, string|false>
-     */
-    private static function narrow(array $headers): array
-    {
-        $merged = [];
-
-        foreach ($headers as $name => $value) {
-            if (!\is_string($name) || (!\is_string($value) && false !== $value)) {
-                throw InvalidHookResult::notAHeaderMap();
-            }
-
-            $merged[$name] = $value;
-        }
-
-        return $merged;
-    }
-
-    /** A conditional GET whose validator still matches answers 304 at the origin. */
-    private static function conditionalHit(?string $ifNoneMatch, string $etag): bool
-    {
-        return null !== $ifNoneMatch && \str_contains($ifNoneMatch, $etag);
-    }
-
-    private static function etag(FragmentKey $key): string
-    {
-        return '"'.\md5($key->toString()).'"';
+        return ResponseHeaders::merge($merged, $policy);
     }
 
     /**

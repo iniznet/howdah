@@ -98,7 +98,7 @@ final class SurfaceCeilingTest extends \WP_UnitTestCase
     {
         self::factory()->post->create_many(3, ['post_content' => 'searchable words', 'post_date' => '2024-01-01 00:00:00']);
         $ctx = self::ctx(QueryKind::Search, 'post', null, null, ['s' => 'searchable words']);
-        $surface = new SearchResults($ctx, $this->classes, $this->content, Bootstrap::services()->get(\Iniznet\Mahout\Kernel\Diagnostics::class));
+        $surface = new SearchResults($ctx, $this->classes, $this->content);
 
         $observed = CeilingProbe::within(static fn (): string => $surface->render(), SearchResults::QUERY_CEILING, 'SearchResults cold');
         self::assertLessThanOrEqual(SearchResults::QUERY_CEILING, $observed);

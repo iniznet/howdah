@@ -7,10 +7,12 @@
  * per-page + 1 rows so no pagination count query is ever issued — and every
  * result set is primed before it is mapped.
  *
- * Search is the indexed path when the FULLTEXT index is present (SRCH-01):
- * the clause and the ordering travel on the query vars and core's own
- * filters swap them in. With the index absent the query is core's own LIKE
- * path, unchanged, and the absence is recorded loudly — once per request.
+ * Search is the indexed path when the FULLTEXT index is present (SRCH-01).
+ * The declaration — the clause, the relevance ordering and the query vars
+ * that carry them — is `mahout-db`'s {@see IndexedSearchSwap}, so this file
+ * states no search grammar. With the index absent the swap answers with
+ * core's own search args, the LIKE path runs unchanged, and the absence is
+ * recorded loudly by the package's fallback report — once per request.
  */
 
 declare(strict_types=1);
@@ -18,8 +20,8 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Features\Content;
 
 use Iniznet\Mahout\Content\PostData;
-use Iniznet\Mahout\Db\Contracts\SearchIndexPresence;
-use Iniznet\Mahout\Render\Exception\SurfaceDataMissing;
+use Iniznet\Mahout\Db\Search\IndexedSearchSwap;
+use Iniznet\Mahout\Db\Search\SearchTerms;
 
 final readonly class ContentRepository
 {
@@ -28,8 +30,7 @@ final readonly class ContentRepository
 
     public function __construct(
         private PostMapper $mapper,
-        private MatchClause $clause,
-        private SearchIndexPresence $presence,
+        private IndexedSearchSwap $search,
     ) {
     }
 
@@ -105,38 +106,25 @@ final readonly class ContentRepository
 
     /**
      * Whether the search query travels the indexed path. The fallback
-     * (core's own LIKE query) is core's query, unchanged; its cost is
-     * reported by the Surface that renders it, not silently here.
+     * (core's own LIKE query) is core's query, unchanged; its absence is
+     * recorded by the swap's own once-per-request report, not silently here.
      */
     public function searchIsIndexed(): bool
     {
-        return $this->presence->present();
+        return $this->search->isIndexed();
     }
 
     /**
      * One page of search results. With the index present this is the
      * FULLTEXT path; without it, core's own LIKE path, unchanged.
+     *
+     * The swap refuses a term with no usable token on either path, and the
+     * Surface that renders a term has already rendered its empty state for
+     * one, so no query is issued for it.
      */
     public function search(SearchTerms $terms, int $page): PostList
     {
-        if (!$terms->hasTokens()) {
-            throw SurfaceDataMissing::forQuery($terms->raw);
-        }
-
-        $filters = ['s' => $terms->raw];
-
-        if ($this->presence->present()) {
-            $joined = $terms->forMatch();
-            $match = $this->clause->against($joined);
-            // Core glues the filter's payload straight after "WHERE 1=1",
-            // so the swapped-in fragment carries core's own AND and the
-            // parenthesisation core's LIKE fragment has.
-            $filters['howdah_indexed_search'] = true;
-            $filters['howdah_match_clause'] = ' AND ('.$match.')';
-            $filters['howdah_match_orderby'] = $match.' DESC';
-        }
-
-        return $this->listing($filters, $page);
+        return $this->listing($this->search->args($terms), $page);
     }
 
     /** The queried term's name, or null when the term does not exist. */

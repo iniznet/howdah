@@ -17,7 +17,8 @@ order. The format follows Semantic Versioning; a major entry names each removal.
 - `FragmentCache` with single-flight regeneration, `CachedFragment` and
   sha256 `FragmentKey`s derived from the site's own content graph.
 - `HeaderPolicy` — the cache and validator headers a plan implies, merged into
-  core's response headers at exactly one filter.
+  core's response headers at exactly one filter; `mahout-render`'s
+  `Cache\HeaderPolicy` since the query-mechanics move below.
 - The `Document` component: one shell per request, `wp_head` and `wp_footer`
   inside it, fed from the resolved plan.
 - Reference gates: `docs/reference/surfaces.md` and `docs/reference/hooks.md`
@@ -27,4 +28,30 @@ order. The format follows Semantic Versioning; a major entry names each removal.
 
 - `Bootstrap` renders the request through the dispatch table; `index.php`
   echoes `Bootstrap::render()`.
+- The query mechanics moved into the packages that own them, and the theme kept
+  the decisions. The indexed search path — the tokeniser, the `MATCH` clause,
+  the two `posts_search` filters and the once-per-request report of their
+  absence — is `mahout-db`'s: the repository states a search intent and takes
+  the query args from the swap, so it declares no search grammar. The response
+  headers — the derivation, the narrowing and merge of core's map, and the
+  conditional `304` — are `mahout-render`'s: the theme records only the
+  reduction it owes the operator. The dispatch table is written with
+  `SurfacePlanBuilder`, whose terminals are the only way to reach a plan, and
+  the surfaces reference reports one row per plan an arm reaches.
+- The field layer's admin screens are derived, not hand-attached.
+  `mahout-fields`' `Admin\FieldsUiProvider` turns the theme's `Contracts\Panels`
+  binding into the metaboxes, the save entry, the route reads and the
+  write-failure notice, and attaches none of them for a theme that declares no
+  panel. `AdminProvider` names only the admin surface the theme owns: the
+  settings screen, the status screen, the migration notices and the list
+  columns. The notice's string moved to the `mahout-fields` text domain, so the
+  theme's POT lost that entry.
+- The theme's own copies of `SearchTerms`, `MatchClause`, `FieldPanel`,
+  `FieldWriteFailedNotice` and `Support\Cache\HeaderPolicy` are gone, with the
+  four hook constants and the three named exception constructors that existed
+  only to serve them.
+- Two gates hold the move in place: a search must deliver the package clause to
+  the database — parity alone cannot tell a swapped fragment from core's `LIKE`
+  — and no theme file may register a metabox, bind a field to a REST route or
+  name a core search filter.
 - Scaffold reconciliation: see docs/decisions/0001-scaffold-reconciliation.md.

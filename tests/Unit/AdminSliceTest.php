@@ -8,12 +8,12 @@ use Iniznet\Howdah\Admin\MigrationFailedNotice;
 use Iniznet\Howdah\Admin\MigrationRequiredNotice;
 use Iniznet\Howdah\Admin\MigrationSnapshot;
 use Iniznet\Howdah\Exception\InvalidFieldDeclaration;
-use Iniznet\Howdah\Features\Fields\FieldPanel;
 use Iniznet\Howdah\Features\Fields\FieldPanels;
 use Iniznet\Howdah\Support\PanelRequest;
 use Iniznet\Mahout\Db\MigrationStatus;
 use Iniznet\Mahout\Db\SchemaVersion;
 use Iniznet\Mahout\Fields\FieldGroup;
+use Iniznet\Mahout\Fields\FieldPanel;
 use Iniznet\Mahout\Fields\ObjectContext;
 use Iniznet\Mahout\Fields\StorageTarget;
 use Iniznet\Mahout\Fields\TextField;
@@ -22,8 +22,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * The admin slice's invariants: the panel request exposes exactly the save
  * contract's shape and nothing else, the declared panels are the only source
- * of metabox pairs, and the migration notices render only for the states
- * that warrant them.
+ * of the pairs the field package registers, and the migration notices render
+ * only for the states that warrant them.
  */
 final class AdminSliceTest extends TestCase
 {
@@ -84,24 +84,20 @@ final class AdminSliceTest extends TestCase
         throw InvalidFieldDeclaration::forType('string');
     }
 
-    public function testAPanelFiltersByItsPostTypeAndYieldsItsGroup(): void
+    public function testAPanelFiltersByItsPostTypeAndIsIterable(): void
     {
         $group = new FieldGroup('fixture_group', ObjectContext::Post, [new TextField('ct_text', StorageTarget::Table)], 'Fixture');
         $panels = new FieldPanels([new FieldPanel('fixture_post', $group)]);
 
         self::assertCount(1, $panels->forPostType('fixture_post'));
         self::assertSame([], $panels->forPostType('other_type'));
-        self::assertSame([$group], $panels->groups());
+        self::assertFalse($panels->isEmpty());
+        self::assertSame([$group], array_map(static fn (FieldPanel $panel): FieldGroup => $panel->group, iterator_to_array($panels)));
     }
 
-    public function testAnEmptyPostTypeIsRefused(): void
+    public function testTheCollectionOfNoDeclarationIsEmpty(): void
     {
-        $group = new FieldGroup('fixture_group', ObjectContext::Post, [new TextField('ct_text', StorageTarget::Meta)]);
-
-        $this->expectException(InvalidFieldDeclaration::class);
-        $this->expectExceptionMessage('empty string');
-
-        new FieldPanel('', $group);
+        self::assertTrue((new FieldPanels([]))->isEmpty());
     }
 
     public function testACurrentSchemaRendersNothingAndAPendingOneWarns(): void

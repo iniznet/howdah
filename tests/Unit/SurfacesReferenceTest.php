@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * The reference gate. The committed docs/reference/surfaces.md must equal a
  * fresh generation from the dispatch table, and the audit must refuse the
- * two shapes the contract forbids: an Uncacheable arm without a reason and
- * a wrapped arm without its Cacheability and FragmentScope. Every negative
- * here mutates a candidate table in memory, never the live tree.
+ * shapes the contract forbids: an arm that reaches no cacheability terminal,
+ * an Uncacheable arm without a reason, and a guard without a reason. Every
+ * negative here mutates a candidate table in memory, never the live tree.
  */
 final class SurfacesReferenceTest extends TestCase
 {
@@ -59,10 +59,9 @@ final class SurfacesReferenceTest extends TestCase
     {
         $table = "match (true) {\n"
             ."    \$ctx->kind === QueryKind::Search\n"
-            ."        => SurfacePlan::uncacheable(\n"
-            ."               surface: new SearchResults(\$ctx),\n"
-            ."               reason: '',\n"
-            ."           ),\n"
+            ."        => \$builder\n"
+            ."            ->surface(static fn (): Component => new SearchResults(\$ctx))\n"
+            ."            ->uncacheable(''),\n"
             .'};';
 
         $offences = SurfacesReference::audit($table);
@@ -71,27 +70,40 @@ final class SurfacesReferenceTest extends TestCase
         self::assertStringContainsString('reason', $offences[0]);
     }
 
-    public function testAWrappedArmWithoutADeclarationFailsTheAudit(): void
+    public function testAnArmThatReachesNoTerminalFailsTheAudit(): void
     {
         $table = "match (true) {\n"
             ."    \$ctx->kind === QueryKind::Singular\n"
-            ."        => SurfacePlan::wrapped(\n"
-            ."               surface: new SingleSeries(\$ctx),\n"
-            ."               key: FragmentKey::fromParts('x'),\n"
-            ."               cache: \$cache,\n"
-            ."           ),\n"
+            ."        => \$builder->surface(static fn (): Component => new SingleSeries(\$ctx)),\n"
             .'};';
 
         $offences = SurfacesReference::audit($table);
 
-        self::assertSame(2, \count($offences), 'cacheability and fragmentScope are both missing and both refused.');
+        self::assertSame(1, \count($offences), 'an arm with no terminal declares nothing and is refused.');
+        self::assertStringContainsString('cacheability terminal', $offences[0]);
+    }
+
+    public function testAGuardWithoutAReasonFailsTheAudit(): void
+    {
+        $table = "match (true) {\n"
+            ."    \$ctx->kind === QueryKind::Home\n"
+            ."        => \$builder\n"
+            ."            ->surface(static fn (): Component => new BlogIndex(\$ctx))\n"
+            ."            ->guardOverflow('')\n"
+            ."            ->shared(\$key),\n"
+            .'};';
+
+        $offences = SurfacesReference::audit($table);
+
+        self::assertSame(1, \count($offences), 'a guard whose reason was dropped is a guard never stated.');
+        self::assertStringContainsString('out-of-range', $offences[0]);
     }
 
     public function testAnArmWithoutASurfaceCannotBeFilled(): void
     {
         $this->expectException(\RuntimeException::class);
 
-        SurfacesReference::arms(self::candidateRoot("match (true) {\n    default => SurfacePlan::uncacheable(reason: 'x'),\n};"));
+        SurfacesReference::arms(self::candidateRoot("default => \$builder->surface(static fn (): Component => \$renderable)->uncacheable('x'),\n}"));
     }
 
     private static function candidateRoot(string $table): string

@@ -113,7 +113,7 @@ app/Features/Series/
 | `WP_List_Table` subclasses, and any quick-edit or bulk-edit field write | Neither path can carry the save lifecycle, and neither has a post lock |
 | A canonical, `robots` or `description` meta tag, and any hand-set security header | Another party owns those; see `docs/planning/10-security.md` |
 | Reflection in production | The fragment key is supplied explicitly; reflection hides the key's contents |
-| A dispatch arm with no `Cacheability` declaration, or an `Uncacheable` arm with no stated reason | The argument has no default; an undeclared arm fails a test and fails the reference gate |
+| An arm of the dispatch table that reaches no cacheability terminal, or an `Uncacheable` arm with no stated reason | The builder has no default and no terminal-less path; such an arm fails a test and fails the reference gate |
 | A nonce, a per-user value or a per-role value in a `Shared` Surface | A shared cache would replay one visitor's token to another — `docs/planning/13-caching.md` |
 | A cache key whose parts are not enumerable from the site's own content graph | A key space an anonymous visitor can invent is a cache an anonymous visitor can fill |
 | A `Cache-Control`, `Vary` or validator header outside the policy in `docs/planning/13-caching.md` §2 | One policy, one owner, one place |
@@ -176,7 +176,7 @@ Repeater payloads are versioned (`{"v":1,"items":[...]}`) and encoded by a dedic
 
 - **The admin UI is not optional.** `Table` fields cannot be bound as block attributes, so the field panel and the field REST route are the only write path for `Table` storage.
 - `mahout-fields` renders every field control and owns the save lifecycle, the editor registry and the field route. The theme registers screens, renders the shell around them, and styles the controls.
-- Registration is greppable: `AdminProvider` names every metabox, menu page, notice and list column. No admin registration at file scope.
+- Registration is greppable: `Bootstrap.php` names every provider, `AdminProvider` names every menu page, notice and list column the theme owns, and `mahout-fields`' `Admin\FieldsUiProvider` — registered after `FieldsProvider` and driven by the host's `Contracts\Panels` binding — attaches the metaboxes, the save entry, the field route and the write-failure notice the declared panels imply. A theme that declares no panel attaches none of them. No admin registration at file scope.
 - **The save lifecycle order is fixed.** Autosave guard, revision guard, foreign-form guard, post lock, capability, nonce, field shape, sanitise, store, record. It runs in that order on both the classic and the REST path, because core checks the post lock on the classic path and not on the REST one.
 - A nonce failure never calls `wp_die()` inside `save_post`; core has already written the post by then.
 - `Meta` fields use `register_post_meta` with `show_in_rest`. `Table` fields are read through `register_rest_field` and written through the field route.
@@ -227,11 +227,11 @@ New hooks are documented first, then added to the inventory in `docs/planning/04
 
 ## Cacheability and throughput
 
-- **Every Surface declares its cacheability.** `Cacheability` (`Shared`, `Private`, `Uncacheable`) and `FragmentScope` are required arguments in the dispatch arm, with no default. A `Shared` surface is wrapped in a `CachedFragment`; an `Uncacheable` one states its reason.
+- **Every Surface declares its cacheability.** An arm of the dispatch table reaches one terminal of `mahout-render`'s `SurfacePlanBuilder`: `shared()` is `Cacheability::Shared` over `FragmentScope::Shared`, `uncacheable()` is `Uncacheable` over `Never` and carries the reason. `guardOverflow()` is the listing arms' second path — the same Surface, `Uncacheable` and stated beyond the last page the content graph holds. There is no default and no way to reach a plan without naming the pair. A per-request class that is not the Shared pair is written with `SurfacePlan::wrapped()`, which names class and scope as arguments.
 - **No layer is required, and no layer changes the code.** Correct at layer 0, faster at layer 5, one path.
 - **The theme owns the purge seam; the client owns the endpoint.** Invalidation emits `howdah/cache/purge`; no vendor API is called.
 - **Every statement is bounded.** A `LIMIT` or a primary-key equality, always. A sweep is chunked by key, resumable and runtime-capped, and never runs on a request path.
-- **Search is an index, not a scan.** The `FULLTEXT` index on `wp_posts` is owned by `mahout-db`; the theme passes only its own tokeniser's output, and falls back loudly to core's query when the index is absent.
+- **Search is an index, not a scan.** The `FULLTEXT` index on `wp_posts`, the tokeniser, the `MATCH` clause, the two core filters and the loud fallback report are all owned by `mahout-db` (`Search\SearchTerms`, `Search\IndexedSearchSwap`, `Search\SearchProvider`). The theme's repository states the search intent and takes the query args from the swap; it declares no search grammar of its own.
 - Full rule: `docs/planning/13-caching.md` and `docs/planning/18-throughput.md`.
 
 ---

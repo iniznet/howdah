@@ -31,11 +31,6 @@ final class InvalidHookResult extends \UnexpectedValueException implements Theme
         return new self('The wp_headers filter must deliver the documented header map.');
     }
 
-    public static function notASearchFragment(): self
-    {
-        return new self('The posts_search filter must deliver the search fragment core built.');
-    }
-
     public static function notAMigrationList(): self
     {
         return new self('The migrations filter must deliver a list of migrations.');

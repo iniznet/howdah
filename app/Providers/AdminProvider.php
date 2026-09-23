@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Admin\ContentModelColumns;
-use Iniznet\Howdah\Admin\FieldWriteFailedNotice;
 use Iniznet\Howdah\Admin\MigrationFailedNotice;
 use Iniznet\Howdah\Admin\MigrationRequiredNotice;
 use Iniznet\Howdah\Admin\MigrationSnapshot;
@@ -13,32 +12,27 @@ use Iniznet\Howdah\Admin\RunMigrations;
 use Iniznet\Howdah\Admin\StatusScreen;
 use Iniznet\Howdah\Admin\ThemeSettingsScreen;
 use Iniznet\Howdah\Exception\InvalidDisplayOption;
-use Iniznet\Howdah\Features\Fields\FieldPanels;
 use Iniznet\Howdah\Features\Settings\DisplayOption;
 use Iniznet\Howdah\Features\Settings\DisplayOptions;
 use Iniznet\Howdah\Support\Hooks;
-use Iniznet\Howdah\Support\Request;
 use Iniznet\Mahout\Db\Contracts\SqlConnection;
 use Iniznet\Mahout\Db\MigrationRunner;
-use Iniznet\Mahout\Fields\Admin\FieldEditor;
-use Iniznet\Mahout\Fields\Admin\FieldMetabox;
-use Iniznet\Mahout\Fields\Admin\FieldRestRoute;
-use Iniznet\Mahout\Fields\Admin\FieldSaveHandler;
-use Iniznet\Mahout\Fields\Admin\FieldTypeRegistry;
-use Iniznet\Mahout\Fields\Admin\WriteFailureNotice;
-use Iniznet\Mahout\Fields\Capabilities;
 use Iniznet\Mahout\Fields\Contracts\FieldReader;
 use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
-use Iniznet\Mahout\Fields\Contracts\FieldWriter;
+use Iniznet\Mahout\Fields\Contracts\Panels;
+use Iniznet\Mahout\Fields\FieldQuery;
+use Iniznet\Mahout\Fields\FieldValuesTable;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
 use Iniznet\Mahout\Kernel\Diagnostics;
 
 /**
- * The admin seam. Every metabox, menu page, notice and list column the theme
- * registers is named here and nowhere else. The field layer's panels derive
- * from the declared FieldPanels collection; the status screen and the
- * migration notices register unconditionally, because the db package's
+ * The admin seam. Every menu page, notice and list column the theme registers
+ * is named here and nowhere else. The field layer's screens are not: they are
+ * derived from the declared panels by `mahout-fields`' Admin\FieldsUiProvider
+ * and registered by the composition root, so the one question this provider
+ * answers is "what admin surface does the theme itself own". The status screen
+ * and the migration notices register unconditionally, because the db package's
  * migrations exist whether or not a feature has declared a panel.
  */
 final class AdminProvider implements ServiceProvider
@@ -68,7 +62,7 @@ final class AdminProvider implements ServiceProvider
     {
         $this->bootStatusScreen($container);
         $this->bootThemeSettings($container);
-        $this->bootFieldPanels($container);
+        $this->bootListColumns($container);
     }
 
     /**
@@ -158,102 +152,32 @@ final class AdminProvider implements ServiceProvider
     }
 
     /**
-     * The field panels: one metabox per (post type, group) pair inside
-     * add_meta_boxes, gated on edit_post for the object being edited; the
-     * save_post entry through the field package's handler; the value route
-     * and its read bindings for the block editor; and the write-failure
-     * notice. A theme that declares no panels attaches none of this.
+     * The declared panels' read-only list-screen presence: one column per
+     * Table-stored field and one filter dropdown per Choice field, built on
+     * the field query builder's bounded statement. The columns write
+     * nothing; the listing the user already reaches gates the read. This is
+     * the whole of the admin surface the theme owns over a panel — the
+     * metabox, the save entry, the value route and the write-failure notice
+     * are the field package's, derived from the same declaration.
      */
-    private function bootFieldPanels(Container $container): void
+    private function bootListColumns(Container $container): void
     {
-        /** @var FieldPanels $panels */
-        $panels = $container->get(FieldPanels::class);
+        /** @var Panels $panels */
+        $panels = $container->get(Panels::class);
 
         if ($panels->isEmpty()) {
             return;
         }
 
-        $registry = $container->get(FieldRegistry::class);
-        $reader = $container->get(FieldReader::class);
-        $writer = $container->get(FieldWriter::class);
-        $diagnostics = $container->get(Diagnostics::class);
-
-        $metabox = new FieldMetabox(
-            new FieldEditor(new FieldTypeRegistry(), $registry, $reader),
-            $registry,
-        );
-
-        $handler = new FieldSaveHandler(
-            Request::panel(),
-            $writer,
-            $registry,
-            $diagnostics,
-        );
-
-        \add_action(
-            Hooks::ADD_META_BOXES,
-            static function (string $postType, \WP_Post $post) use ($panels, $metabox): void {
-                // A panel the user cannot edit the post for is an
-                // information leak; the metabox is not rendered, not just
-                // its values withheld.
-                if (!\current_user_can(Capabilities::EditPost->value, $post->ID)) {
-                    return;
-                }
-
-                foreach ($panels->forPostType($postType) as $panel) {
-                    $metabox->register($panel->postType, $panel->group->id);
-                }
-            },
-            priority: 10,
-            accepted_args: 2,
-        );
-
-        \add_action(Hooks::SAVE_POST, $handler->handle(...), priority: 10, accepted_args: 3);
-
-        \add_action(
-            Hooks::REST_API_INIT,
-            static function () use ($panels, $registry, $writer, $reader, $diagnostics): void {
-                $route = new FieldRestRoute($registry, $writer, $reader, $diagnostics);
-                $route->register();
-
-                foreach ($panels as $panel) {
-                    $route->registerReads(
-                        $panel->postType,
-                        ...\array_map(static fn ($field): string => $field->id, $panel->group->fields),
-                    );
-                }
-            },
-            priority: 10,
-            accepted_args: 0,
-        );
-
-        \add_action(
-            Hooks::ADMIN_NOTICES,
-            static fn () => new FieldWriteFailedNotice(new WriteFailureNotice())->render(),
-            priority: 20,
-            accepted_args: 0,
-        );
-
-        $this->bootListColumns($container, $panels);
-    }
-
-    /**
-     * The declared panels' read-only list-screen presence: one column per
-     * Table-stored field and one filter dropdown per Choice field, built on
-     * the field query builder's bounded statement. The columns write
-     * nothing; the listing the user already reaches gates the read.
-     */
-    private function bootListColumns(Container $container, FieldPanels $panels): void
-    {
         $connection = $container->get(SqlConnection::class);
 
         $columns = new ContentModelColumns(
             $panels,
             $container->get(FieldReader::class),
-            new \Iniznet\Mahout\Fields\FieldQuery(
+            new FieldQuery(
                 $container->get(FieldRegistry::class),
                 $connection,
-                \Iniznet\Mahout\Fields\FieldValuesTable::table($connection->prefix(), $connection->charsetCollate()),
+                FieldValuesTable::table($connection->prefix(), $connection->charsetCollate()),
             ),
         );
 

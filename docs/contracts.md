@@ -10,17 +10,17 @@ The theme's own promise is small and greppable:
 
 | Contract | Where | Promise |
 |---|---|---|
-| `Hooks` | `app/Support/Hooks.php` | Every hook name the theme emits or reads, as a `public const`. No inline hook-name strings anywhere in the tree. |
-| `Surfaces::resolve()` | `app/Render/Surfaces.php` | A request resolves to exactly one `SurfacePlan`. A filter may replace the plan, never the contract. |
-| `SurfacePlan` | `app/Render/SurfacePlan.php` | A plan always names its Surface, its `Cacheability` and its `FragmentScope`; an uncacheable plan carries its reason. |
-| `QueryContext` | `app/Render/QueryContext.php` | The request's shape, resolved once, passed by value — filters receive it, never a mutable WordPress object. |
+| `Hooks` | `app/Support/Hooks.php` | Every hook name the theme emits or reads, as a `public const`. No inline hook-name strings anywhere in the tree. The core hooks a package attaches — `posts_search`, `add_meta_boxes`, `rest_api_init` and the rest — are named by that package's own `Hooks` class, so a hook the theme does not attach is a hook the theme does not name. |
+| `Surfaces::resolve()` | `app/Surfaces/Surfaces.php` | A request resolves to exactly one `SurfacePlan`. A filter may replace the plan, never the contract. |
+| `SurfacePlan` | `mahout-render`, `src/SurfacePlan.php` | A plan always names its Surface, its `Cacheability` and its `FragmentScope`; an uncacheable plan carries its reason. |
+| `QueryContext` | `mahout-render`, `src/QueryContext.php` | The request's shape, resolved once, passed by value — filters receive it, never a mutable WordPress object. |
 | Theme exceptions | `app/Exception/` | Every thrown condition is `final`, implements the package marker, and is built only through named constructors. |
 
 ## The reference documents
 
 Two documents are generated from the live tree and enforced by the suite:
 
-- `docs/reference/surfaces.md` — one row per dispatch arm: Surface, cacheability, fragment scope, reason.
+- `docs/reference/surfaces.md` — one row per plan a dispatch arm reaches: Surface, cacheability, fragment scope, reason.
 - `docs/reference/hooks.md` — one row per hook: name, hook, kind, arguments, since, purpose.
 
 A committed copy that drifts from the code fails the test suite. Both are regenerated with the flags documented in [getting-started.md](getting-started.md).

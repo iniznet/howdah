@@ -41,14 +41,13 @@ use Iniznet\Howdah\Surfaces\Arms\GenericList;
 use Iniznet\Howdah\Surfaces\Arms\NotFound;
 use Iniznet\Howdah\Surfaces\Arms\SearchResults;
 use Iniznet\Mahout\Kernel\Container;
-use Iniznet\Mahout\Kernel\Diagnostics;
-use Iniznet\Mahout\Render\Cacheability;
+use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\FragmentCache;
 use Iniznet\Mahout\Render\FragmentKey;
-use Iniznet\Mahout\Render\FragmentScope;
 use Iniznet\Mahout\Render\QueryContext;
 use Iniznet\Mahout\Render\QueryKind;
 use Iniznet\Mahout\Render\SurfacePlan;
+use Iniznet\Mahout\Render\SurfacePlanBuilder;
 use Iniznet\Mahout\Ui\ClassResolver;
 
 final class Surfaces
@@ -65,97 +64,57 @@ final class Surfaces
 
         $classes = $services->get(ClassResolver::class);
         $content = $services->get(ContentRepository::class);
-        $cache = $services->get(FragmentCache::class);
+        $builder = new SurfacePlanBuilder($context, $services->get(FragmentCache::class));
 
         $plan = match (true) {
-            QueryKind::Embed === $context->kind => SurfacePlan::uncacheable(
-                surface: new EmbedContent($context, $content, $classes),
-                reason: 'embed document, rendered for one parent request',
-            ),
-            QueryKind::Front === $context->kind && null !== $context->objectId => SurfacePlan::wrapped(
-                surface: new SinglePage($context, $content, $classes),
-                cacheability: Cacheability::Shared,
-                fragmentScope: FragmentScope::Shared,
-                key: FragmentKey::fromParts(
+            QueryKind::Embed === $context->kind => $builder
+                ->surface(static fn (): Component => new EmbedContent($context, $content, $classes))
+                ->uncacheable('embed document, rendered for one parent request'),
+            QueryKind::Front === $context->kind && null !== $context->objectId => $builder
+                ->surface(static fn (): Component => new SinglePage($context, $content, $classes))
+                ->shared(FragmentKey::fromParts(
                     SinglePage::class,
                     $context->objectId,
                     $context->contentPage(),
                     $context->site->locale,
-                ),
-                cache: $cache,
-            ),
-            QueryKind::Front === $context->kind => $context->outOfRangePage
-                ? SurfacePlan::uncacheable(
-                    surface: new BlogIndex($context, $content, $classes),
-                    reason: 'page beyond the content graph, out of range',
-                )
-                : SurfacePlan::wrapped(
-                    surface: new BlogIndex($context, $content, $classes),
-                    cacheability: Cacheability::Shared,
-                    fragmentScope: FragmentScope::Shared,
-                    key: self::indexKey($context),
-                    cache: $cache,
-                ),
-            QueryKind::Home === $context->kind => $context->outOfRangePage
-                ? SurfacePlan::uncacheable(
-                    surface: new BlogIndex($context, $content, $classes),
-                    reason: 'page beyond the content graph, out of range',
-                )
-                : SurfacePlan::wrapped(
-                    surface: new BlogIndex($context, $content, $classes),
-                    cacheability: Cacheability::Shared,
-                    fragmentScope: FragmentScope::Shared,
-                    key: self::indexKey($context),
-                    cache: $cache,
-                ),
-            QueryKind::Singular === $context->kind && 'post' === $context->postType => SurfacePlan::wrapped(
-                surface: new SinglePost($context, $content, $classes),
-                cacheability: Cacheability::Shared,
-                fragmentScope: FragmentScope::Shared,
-                key: FragmentKey::fromParts(
+                )),
+            QueryKind::Front === $context->kind => $builder
+                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes))
+                ->guardOverflow('page beyond the content graph, out of range')
+                ->shared(self::indexKey($context)),
+            QueryKind::Home === $context->kind => $builder
+                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes))
+                ->guardOverflow('page beyond the content graph, out of range')
+                ->shared(self::indexKey($context)),
+            QueryKind::Singular === $context->kind && 'post' === $context->postType => $builder
+                ->surface(static fn (): Component => new SinglePost($context, $content, $classes))
+                ->shared(FragmentKey::fromParts(
                     SinglePost::class,
                     $context->objectId ?? 0,
                     $context->contentPage(),
                     $context->site->locale,
-                ),
-                cache: $cache,
-            ),
-            QueryKind::Singular === $context->kind && 'page' === $context->postType => SurfacePlan::wrapped(
-                surface: new SinglePage($context, $content, $classes),
-                cacheability: Cacheability::Shared,
-                fragmentScope: FragmentScope::Shared,
-                key: FragmentKey::fromParts(
+                )),
+            QueryKind::Singular === $context->kind && 'page' === $context->postType => $builder
+                ->surface(static fn (): Component => new SinglePage($context, $content, $classes))
+                ->shared(FragmentKey::fromParts(
                     SinglePage::class,
                     $context->objectId ?? 0,
                     $context->contentPage(),
                     $context->site->locale,
-                ),
-                cache: $cache,
-            ),
-            QueryKind::Archive === $context->kind => $context->outOfRangePage
-                ? SurfacePlan::uncacheable(
-                    surface: new ContentArchive($context, $content, $classes),
-                    reason: 'page beyond the content graph, out of range',
-                )
-                : SurfacePlan::wrapped(
-                    surface: new ContentArchive($context, $content, $classes),
-                    cacheability: Cacheability::Shared,
-                    fragmentScope: FragmentScope::Shared,
-                    key: self::archiveKey($context),
-                    cache: $cache,
-                ),
-            QueryKind::Search === $context->kind => SurfacePlan::uncacheable(
-                surface: new SearchResults($context, $classes, $content, $services->get(Diagnostics::class)),
-                reason: 'free-text term, unbounded key space',
-            ),
-            QueryKind::NotFound === $context->kind => SurfacePlan::uncacheable(
-                surface: new NotFound($context, $classes),
-                reason: 'a 404 is a statement about the current content graph',
-            ),
-            default => SurfacePlan::uncacheable(
-                surface: new GenericList($classes),
-                reason: 'unmapped request kind',
-            ),
+                )),
+            QueryKind::Archive === $context->kind => $builder
+                ->surface(static fn (): Component => new ContentArchive($context, $content, $classes))
+                ->guardOverflow('page beyond the content graph, out of range')
+                ->shared(self::archiveKey($context)),
+            QueryKind::Search === $context->kind => $builder
+                ->surface(static fn (): Component => new SearchResults($context, $classes, $content))
+                ->uncacheable('free-text term, unbounded key space'),
+            QueryKind::NotFound === $context->kind => $builder
+                ->surface(static fn (): Component => new NotFound($context, $classes))
+                ->uncacheable('a 404 is a statement about the current content graph'),
+            default => $builder
+                ->surface(static fn (): Component => new GenericList($classes))
+                ->uncacheable('unmapped request kind'),
         };
 
         $resolved = apply_filters(Hooks::SURFACE_RESOLVE, $plan, $context);

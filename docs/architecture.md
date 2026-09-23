@@ -20,9 +20,9 @@ Arrows point one way only. Data flows `Providers → Modules → Repositories �
 ## The render pipeline
 
 1. **Resolve.** `Surfaces::resolve()` builds a `QueryContext` — the request's shape as a value object — and dispatches on it. The table has one arm per request kind; a filter may swap the plan, and a non-plan result is refused loudly.
-2. **Declare.** Every arm names its Surface, its `Cacheability` (`Shared`, `Private`, `Uncacheable`) and its `FragmentScope`. An `Uncacheable` arm states its reason. There is no default and no inferred case.
+2. **Declare.** An arm reaches one terminal of the plan builder: `shared()` names `Cacheability::Shared` over `FragmentScope::Shared`, `uncacheable()` names the pair that stores nothing and carries the reason, and `guardOverflow()` gives a listing arm its second path — the same Surface, uncacheable and stated, beyond the last page the content graph holds. A class that is not the Shared pair is written with `SurfacePlan::wrapped()`, which names its class and its scope as arguments. There is no default and no inferred case.
 3. **Render.** The plan's Surface renders through the `Document` component — one shell per request, `wp_head` and `wp_footer` inside it. Cacheable output passes through `CachedFragment`, keyed by a `FragmentKey` whose parts come only from the site's own content graph.
-4. **Head.** `HeaderPolicy` derives the request's cache and validator headers from the plan's declaration; the merged map is delivered through core's `wp_headers` filter and refused if a subscriber hands back anything but the documented shape.
+4. **Head.** `mahout-render`'s `Cache\HeaderPolicy` derives the request's cache and validator headers from the plan's declaration, `Cache\ResponseHeaders` narrows core's payload and merges the policy over it, and `Cache\ConditionalGet` answers a matching `If-None-Match` with a `304`. The merged map is delivered through core's `wp_headers` filter and refused if a subscriber hands back anything but the documented shape. What the theme keeps is the record: a derivation the request state reduced is logged in development, because a downgrade nobody can see is a silent fallback.
 
 Failure is defined: a Surface that throws is recorded through diagnostics, and production renders the error Surface with a `500` — never a white screen, never a silent fallback.
 

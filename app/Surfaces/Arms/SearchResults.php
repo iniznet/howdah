@@ -6,9 +6,9 @@
  *
  * A term with no usable token renders the empty state and issues no query —
  * the LIKE fallback for a too-short search would be the attack the search
- * rules exist to prevent. The repository decides the indexed path; when the
- * FULLTEXT index is absent the Surface records the fallback loudly, once per
- * request — a read path records no per-request log of its own.
+ * rules exist to prevent. The tokeniser's caps are `mahout-db`'s, and so is
+ * the loud record of the LIKE fallback: the swap reports an absent index
+ * once per request, on the path that takes it. This arm records nothing.
  */
 
 declare(strict_types=1);
@@ -16,10 +16,7 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Surfaces\Arms;
 
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Features\Content\MatchClause;
-use Iniznet\Howdah\Features\Content\SearchTerms;
-use Iniznet\Mahout\Kernel\Diagnostics;
-use Iniznet\Mahout\Kernel\Level;
+use Iniznet\Mahout\Db\Search\SearchTerms;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Render\QueryContext;
@@ -39,7 +36,6 @@ final readonly class SearchResults implements Component
         private QueryContext $ctx,
         private ClassResolver $classes,
         private ContentRepository $content,
-        private Diagnostics $diagnostics,
     ) {
     }
 
@@ -59,14 +55,6 @@ final readonly class SearchResults implements Component
                     ),
                 ),
             )->render();
-        }
-
-        if (!$this->content->searchIsIndexed()) {
-            $this->diagnostics->log(
-                level: Level::Error,
-                message: 'search index missing; core search path in use',
-                context: ['index' => MatchClause::INDEX_NAME],
-            );
         }
 
         $list = $this->content->search($terms, $this->ctx->listingPage());

@@ -12,40 +12,8 @@ msgstr ""
 msgid "Applied migrations"
 msgstr ""
 
-#: app/Components/Content/markup/avatar.php:8
-msgid "Avatar of %s"
-msgstr ""
-
-#: app/Components/Navigation/markup/breadcrumb.php:7
-msgid "Breadcrumb"
-msgstr ""
-
-#: app/Components/Overlays/markup/dialog.php:13
-msgid "Close"
-msgstr ""
-
-#: app/Components/Post/markup/pagination.php:11
-msgid "Newer"
-msgstr ""
-
-#: app/Components/Post/markup/pagination.php:14
-msgid "Older"
-msgstr ""
-
 #: app/Admin/markup/status.php:21
 msgid "Pending migrations"
-msgstr ""
-
-#: app/Components/Forms/markup/form-summary.php:8
-msgid "Please fix the following:"
-msgstr ""
-
-#: app/Components/Post/markup/embed-body.php:17
-msgid "Read the full post"
-msgstr ""
-
-#: app/Components/Feedback/markup/error-state.php:13
-msgid "Reference: %s"
 msgstr ""
 
 #: app/Admin/markup/status.php:12
@@ -60,28 +28,11 @@ msgstr ""
 msgid "Site status"
 msgstr ""
 
-#: app/Render/markup/shell-open.php:18
-msgid "Skip to content"
-msgstr ""
-
-#: app/Render/markup/error.php:16
-msgid "Something went wrong."
-msgstr ""
-
 #: app/Admin/markup/status.php:24
 msgid "The stored schema is ahead of the code."
 msgstr ""
 
-#: app/Render/markup/error.php:17
-msgid "The support reference for this failure is %s."
-msgstr ""
-
 #: app/Admin/markup/theme-settings.php:8
 msgid "Theme settings"
-msgstr ""
-
-#. translators: %s: the current year.
-#: app/Components/Navigation/markup/site-footer.php:11
-msgid "© %s"
 msgstr ""
 

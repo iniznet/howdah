@@ -20,7 +20,7 @@ namespace Iniznet\Howdah\Tests\Integration;
 
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Features\Content\SearchTerms;
+use Iniznet\Mahout\Db\Search\SearchTerms;
 
 final class SearchParityTest extends \WP_UnitTestCase
 {
@@ -98,6 +98,78 @@ final class SearchParityTest extends \WP_UnitTestCase
             "a multi-term query must return at least core's result set for 'harbor canyon'.",
         );
         self::assertNotSame([], self::indexedIds($repository, 'harbor canyon'));
+    }
+
+    /**
+     * The proof parity alone cannot make, and the one the rewire needs: a
+     * query whose clause was never swapped still answers core's result set,
+     * because the index clause and the LIKE fragment match the same rows. So
+     * this asserts the statement rather than the rows. `SearchProvider`
+     * registered after `DbProvider` in the composition root is the only
+     * reason a `MATCH` reaches the database at all, and no other test in this
+     * tree would notice the registration being dropped.
+     */
+    public function testTheCompositionRootDeliversThePackageClause(): void
+    {
+        $repository = Bootstrap::services()->get(ContentRepository::class);
+
+        self::assertTrue($repository->searchIsIndexed(), 'the fixture database must carry the FULLTEXT index.');
+
+        $this->fixtures[] = (int) self::factory()->post->create([
+            'post_title' => 'Lighthouse Keeper',
+            'post_content' => 'A lighthouse keeper trims the lamp.',
+            'post_date' => '2024-01-01 00:00:00',
+        ]);
+
+        global $wpdb;
+        $wpdb->query('COMMIT');
+
+        $delivered = implode("\n", self::searchStatements($repository));
+
+        self::assertNotSame('', $delivered, 'a search must issue a select.');
+
+        self::assertStringContainsString(
+            "MATCH (post_title, post_excerpt, post_content) AGAINST ('lighthouse' IN NATURAL LANGUAGE MODE)",
+            $delivered,
+            'the clause the package built is the fragment the query ran with.',
+        );
+
+        self::assertStringContainsString(
+            "AGAINST ('lighthouse' IN NATURAL LANGUAGE MODE) DESC",
+            $delivered,
+            'the relevance ordering is the package expression, not the core title-match case.',
+        );
+
+        self::assertStringNotContainsString(
+            "LIKE '%lighthouse%'",
+            $delivered,
+            'core LIKE fragment is replaced, not left standing beside the index clause.',
+        );
+    }
+
+    /**
+     * The statements one repository search issues, read off core's own query
+     * buffer (SAVEQUERIES is on in the suite's bootstrap).
+     *
+     * @return list<string>
+     */
+    private static function searchStatements(ContentRepository $repository): array
+    {
+        global $wpdb;
+
+        $before = \is_array($wpdb->queries) ? \count($wpdb->queries) : 0;
+        $repository->search(SearchTerms::fromString('lighthouse'), 1);
+        $buffer = \is_array($wpdb->queries) ? \array_slice($wpdb->queries, $before) : [];
+
+        $statements = [];
+
+        foreach ($buffer as $entry) {
+            if (\is_array($entry) && isset($entry[0]) && \is_string($entry[0])) {
+                $statements[] = $entry[0];
+            }
+        }
+
+        return $statements;
     }
 
     /** @return list<int> */

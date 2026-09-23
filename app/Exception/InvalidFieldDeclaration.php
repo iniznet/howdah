@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Exception;
 
-use Iniznet\Howdah\Features\Fields\FieldPanel;
+use Iniznet\Mahout\Fields\FieldPanel;
 
 /**
- * A field declaration is not a FieldPanel, or a panel's post type is empty.
+ * A field declaration is not a FieldPanel. The panel's own invariant — that it
+ * names a post type — is the field package's, and the package throws
+ * {@see \Iniznet\Mahout\Fields\Exception\InvalidPanelDeclaration} for it; this
+ * exception answers only the question the theme's config file raises, which is
+ * what its entries are at all.
  */
 final class InvalidFieldDeclaration extends \InvalidArgumentException implements ThemeException
 {
@@ -22,14 +26,6 @@ final class InvalidFieldDeclaration extends \InvalidArgumentException implements
             'config/fields.php must list %s entries; got %s.',
             FieldPanel::class,
             $debugType,
-        ));
-    }
-
-    public static function forEmptyPostType(): self
-    {
-        return new self(sprintf(
-            'Every %s must name a post type; got an empty string.',
-            FieldPanel::class,
         ));
     }
 }

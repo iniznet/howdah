@@ -24,6 +24,8 @@ use Iniznet\Howdah\Surfaces\Surfaces;
 use Iniznet\Mahout\Assets\AssetsProvider as AssetsPackageProvider;
 use Iniznet\Mahout\Content\ContentProvider as ContentPackageProvider;
 use Iniznet\Mahout\Db\DbProvider;
+use Iniznet\Mahout\Db\Search\SearchProvider;
+use Iniznet\Mahout\Fields\Admin\FieldsUiProvider;
 use Iniznet\Mahout\Fields\FieldsProvider;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Diagnostics;
@@ -48,7 +50,16 @@ final class Bootstrap
         $kernel->provider(AssetsProvider::class);
         $kernel->provider(AssetsPackageProvider::class);
         $kernel->provider(DbProvider::class);
+        // The indexed search swap is built on the connection and the cached
+        // index presence DbProvider declares, so it registers after it — and
+        // ContentProvider resolves the swap, so it registers after this one.
+        $kernel->provider(SearchProvider::class);
         $kernel->provider(FieldsProvider::class);
+        // The field package's admin screens: built on the registry, the
+        // reader and the writer FieldsProvider binds, and driven by the
+        // panels this theme's EditorProvider binds. Nothing is attached when
+        // the theme declares no panel.
+        $kernel->provider(FieldsUiProvider::class);
         $kernel->provider(ContentPackageProvider::class);
         $kernel->provider(ContentProvider::class);
         $kernel->provider(EditorProvider::class);

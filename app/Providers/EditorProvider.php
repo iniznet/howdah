@@ -5,19 +5,25 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidFieldDeclaration;
-use Iniznet\Howdah\Features\Fields\FieldPanel;
 use Iniznet\Howdah\Features\Fields\FieldPanels;
+use Iniznet\Howdah\Support\Request;
 use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
+use Iniznet\Mahout\Fields\Contracts\Panels;
+use Iniznet\Mahout\Fields\Contracts\RequestInput;
+use Iniznet\Mahout\Fields\FieldPanel;
 use Iniznet\Mahout\Fields\Hooks as FieldHooks;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
 
 /**
  * The editor seam. A feature's schema declares its field groups in
- * config/fields.php, one FieldPanel per (post type, group) pair; this
- * provider loads that declaration, registers each group on the field
- * package's registry, and shares the collection with AdminProvider, which
- * derives every metabox, save entry and REST binding from it. The empty
+ * config/fields.php, one FieldPanel per (post type, group) pair; this provider
+ * loads that declaration, registers each group on the field package's
+ * registry, and hands the collection to the container under the package's
+ * Panels contract. `mahout-fields`' Admin\FieldsUiProvider — registered after
+ * FieldsProvider by the composition root — turns that declaration into the
+ * metaboxes, the save entry, the REST read bindings and the write-failure
+ * notice, and attaches none of them when the declaration is empty. The empty
  * theme declares no panels.
  */
 final class EditorProvider implements ServiceProvider
@@ -46,7 +52,15 @@ final class EditorProvider implements ServiceProvider
         $this->panels = $panels;
         $collection = new FieldPanels($panels);
 
-        $container->set($collection, FieldPanels::class);
+        // The contract id, not the concrete class: every consumer — this
+        // theme's list columns and the package's admin UI — resolves panels
+        // through Panels, so there is exactly one key to grep for.
+        $container->set($collection, Panels::class);
+
+        // The save boundary reads the submitted panel through the package's
+        // RequestInput contract; the superglobal is read in Support\Request
+        // and nowhere else.
+        $container->set(Request::panel(), RequestInput::class);
 
         // register() of every provider runs before any boot(), so this
         // listener is in place when the field package's boot fires the hook.
@@ -64,7 +78,7 @@ final class EditorProvider implements ServiceProvider
 
     public function boot(Container $container): void
     {
-        // The groups are registered; the editor surfaces belong to the
-        // panels' metabox composition in AdminProvider.
+        // The groups are registered; the admin surfaces they imply are
+        // attached by the field package's own provider.
     }
 }

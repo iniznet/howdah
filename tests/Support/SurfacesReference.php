@@ -6,10 +6,19 @@ namespace Iniznet\Howdah\Tests\Support;
 
 /**
  * The surfaces reference generator. It parses the dispatch table and emits
- * docs/reference/surfaces.md — one row per arm with its Surface, its
- * declared Cacheability, its FragmentScope and, for an Uncacheable arm, the
- * reason. A row it cannot fill fails generation: an arm without a
- * cacheability declaration fails a test AND fails this reference gate.
+ * docs/reference/surfaces.md — one row per plan an arm can reach, with its
+ * Surface, its declared Cacheability, its FragmentScope and, for an
+ * Uncacheable plan, the reason. A row it cannot fill fails generation: an arm
+ * that reaches no terminal fails a test AND fails this reference gate.
+ *
+ * The table is written with `mahout-render`'s SurfacePlanBuilder, so the
+ * declaration a row reads is the arm's TERMINAL: `shared()` is the Shared
+ * class over the Shared scope, `uncacheable()` is the Uncacheable class over
+ * the Never scope and carries the reason, and `guardOverflow()` is an arm's
+ * second path — the same Surface, Uncacheable and stated, beyond the last
+ * page the content graph holds. The pair is not an argument an author can
+ * omit, so the gate reads the terminal and refuses an arm that never reaches
+ * one.
  *
  * The parser is deliberately shape-tolerant: a condition may sit on its own
  * line or share the arrow's line, because formatting is not the contract —
@@ -19,10 +28,17 @@ final class SurfacesReference
 {
     private const string TABLE_PATH = '/app/Surfaces/Surfaces.php';
 
-    private const string CALL = 'SurfacePlan::';
+    /** The one call each arm begins with, and therefore the arm's anchor. */
+    private const string ARM = '->surface(';
+
+    private const string SHARED = '->shared(';
+
+    private const string GUARDED = '->guardOverflow(';
+
+    private const string REFUSING = '->uncacheable(';
 
     /**
-     * Every arm of the dispatch table, parsed.
+     * Every arm of the dispatch table, parsed, one row per plan it reaches.
      *
      * @return list<array{arm: string, surface: string, cacheability: string, scope: string, reason: string}>
      */
@@ -30,29 +46,17 @@ final class SurfacesReference
     {
         $source = (string) file_get_contents($root.self::TABLE_PATH);
         $table = self::table($source);
+        $anchors = self::anchors($table);
         $arms = [];
 
-        $offsets = [];
-        $cursor = 0;
+        foreach ($anchors as $index => $at) {
+            $start = 0 === $index ? 0 : $anchors[$index - 1];
+            $preceding = (string) substr($table, $start, $at - $start);
+            $body = (string) substr($table, $at, self::bodyEnd($table, $at) - $at);
 
-        while (($at = strpos($table, self::CALL, $cursor)) !== false) {
-            $offsets[] = $at;
-            $cursor = $at + strlen(self::CALL);
-        }
-
-        if ([] === $offsets) {
-            throw new \RuntimeException('No dispatch arm was parsed; the reference cannot be generated.');
-        }
-
-        $arms = [];
-
-        foreach ($offsets as $index => $at) {
-            $start = 0 === $index ? 0 : $offsets[$index - 1] + strlen(self::CALL);
-            $preceding = (string) substr($table, $start, (int) $at - $start);
-            $kind = self::kindAt($table, (int) $at);
-            $body = self::armBody($table, (int) $at);
-
-            $arms[] = self::row(self::armName($preceding), $kind, $body);
+            foreach (self::rows(self::armName($preceding), $body) as $row) {
+                $arms[] = $row;
+            }
         }
 
         return $arms;
@@ -77,10 +81,11 @@ final class SurfacesReference
 
         $header = "# Surfaces reference\n\n"
             ."Generated from app/Surfaces/Surfaces.php by tests/Support/SurfacesReference.php.\n"
-            ."One row per dispatch arm: the Surface that renders the request, its declared\n"
-            ."cacheability class, its fragment scope and, for an Uncacheable arm, the\n"
-            ."reason it is not stored. A dispatch arm with no declaration fails a test and\n"
-            ."fails this reference gate.\n\n"
+            ."One row per plan a dispatch arm reaches: the Surface that renders the request, its\n"
+            ."declared cacheability class, its fragment scope and, for an Uncacheable plan, the\n"
+            ."reason it is not stored. The plan is the arm's terminal — shared(), uncacheable()\n"
+            ."or a guardOverflow() that ends in shared() — and an arm that reaches none fails a\n"
+            ."test and fails this reference gate.\n\n"
             ."Regenerate with MAHOUT_SURFACES_REGENERATE=1 vendor/bin/phpunit --filter SurfacesReferenceTest.\n\n"
             ."| Arm | Surface | Cacheability | Fragment scope | Reason |\n"
             ."|---|---|---|---|---|\n";
@@ -89,57 +94,156 @@ final class SurfacesReference
     }
 
     /**
-     * The gate: every arm of a candidate table must name its Surface and its
-     * declarations. Every refusal is one finding.
+     * The gate: every arm of a candidate table must name its Surface and
+     * reach a terminal, and every terminal that stores nothing must state
+     * why. Every refusal is one finding.
      *
      * @return list<string>
      */
     public static function audit(string $table): array
     {
         $offences = [];
-        $starts = [];
-        $at = 0;
 
-        while (($at = strpos($table, self::CALL, $at)) !== false) {
-            $starts[] = $at;
-            $at += strlen(self::CALL);
-        }
-
-        foreach ($starts as $index => $at) {
-            $kind = self::kindAt($table, $at);
-            $name = self::armName((string) substr($table, 0 === $index ? 0 : $starts[$index - 1] + strlen(self::CALL), $at - (0 === $index ? 0 : $starts[$index - 1] + strlen(self::CALL))));
-            $body = self::armBody($table, $at);
+        foreach (self::anchors($table) as $at) {
+            $body = (string) substr($table, $at, self::bodyEnd($table, $at) - $at);
+            $name = self::armName((string) substr($table, 0, $at));
 
             if (1 !== preg_match('/new\s+[A-Za-z0-9_\\\\]+/', $body)) {
                 $offences[] = 'arm "'.$name.'": no Surface class named.';
                 continue;
             }
 
-            if ('wrapped' === $kind) {
-                if (1 !== preg_match('/cacheability:\s*Cacheability::[A-Za-z]+/', $body)) {
-                    $offences[] = 'arm "'.$name.'": cacheability is not declared; every arm declares a Cacheability.';
-                }
+            $refusing = self::first($body, self::REFUSING);
+            $shared = self::first($body, self::SHARED);
+            $guard = self::first($body, self::GUARDED);
 
-                if (1 !== preg_match('/fragmentScope:\s*FragmentScope::[A-Za-z]+/', $body)) {
-                    $offences[] = 'arm "'.$name.'": fragmentScope is not declared; every arm declares a FragmentScope.';
-                }
-
+            if (null === $refusing && null === $shared) {
+                $offences[] = 'arm "'.$name.'": no cacheability terminal; an arm ends in shared() or uncacheable().';
                 continue;
             }
 
-            if (1 !== preg_match("/reason:\s*'[^']+'/", $body)) {
+            if (null !== $refusing && '' === self::reasonAt($body, $refusing)) {
                 $offences[] = 'arm "'.$name.'": an Uncacheable arm must state its reason.';
+            }
+
+            if (null !== $guard && '' === self::reasonAt($body, $guard)) {
+                $offences[] = 'arm "'.$name.'": a guarded arm must state why its out-of-range page is not stored.';
             }
         }
 
         return $offences;
     }
 
-    private static function kindAt(string $table, int $at): string
+    /**
+     * The rows one arm writes: one for a plain arm, two for a guarded arm,
+     * because a guard is the same Surface on two declared paths.
+     *
+     * @return list<array{arm: string, surface: string, cacheability: string, scope: string, reason: string}>
+     */
+    private static function rows(string $arm, string $body): array
     {
-        $rest = substr($table, $at, strlen(self::CALL) + 32);
+        $surface = 1 === preg_match('/new\s+([A-Za-z0-9_\\\\]+)/', $body, $m) ? $m[1] : '';
 
-        return str_contains($rest, self::CALL.'wrapped') ? 'wrapped' : 'uncacheable';
+        if ('' === $surface) {
+            throw new \RuntimeException('A dispatch arm the reference cannot fill: '.$arm.'.');
+        }
+
+        $refusing = self::first($body, self::REFUSING);
+        $shared = self::first($body, self::SHARED);
+        $guard = self::first($body, self::GUARDED);
+
+        if (null !== $refusing && (null === $shared || $refusing < $shared)) {
+            $reason = self::reasonAt($body, $refusing);
+
+            if ('' === $reason) {
+                throw new \RuntimeException('An Uncacheable arm without a reason fails the reference gate.');
+            }
+
+            return [self::row($arm, $surface, 'Uncacheable', 'Never', $reason)];
+        }
+
+        if (null === $shared) {
+            throw new \RuntimeException('A dispatch arm with no cacheability terminal fails the reference gate: '.$arm.'.');
+        }
+
+        if (null === $guard) {
+            return [self::row($arm, $surface, 'Shared', 'Shared', '')];
+        }
+
+        $refusal = self::reasonAt($body, $guard);
+
+        if ('' === $refusal) {
+            throw new \RuntimeException('A guarded arm without a reason fails the reference gate.');
+        }
+
+        return [
+            self::row($arm, $surface, 'Shared', 'Shared', ''),
+            self::row($arm.' (out of range)', $surface, 'Uncacheable', 'Never', $refusal),
+        ];
+    }
+
+    /**
+     * @return array{arm: string, surface: string, cacheability: string, scope: string, reason: string}
+     */
+    private static function row(string $arm, string $surface, string $cacheability, string $scope, string $reason): array
+    {
+        return [
+            'arm' => $arm,
+            'surface' => $surface,
+            'cacheability' => $cacheability,
+            'scope' => $scope,
+            'reason' => $reason,
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function anchors(string $table): array
+    {
+        $offsets = [];
+        $cursor = 0;
+
+        while (($at = strpos($table, self::ARM, $cursor)) !== false) {
+            $offsets[] = $at;
+            $cursor = $at + strlen(self::ARM);
+        }
+
+        if ([] === $offsets) {
+            throw new \RuntimeException('No dispatch arm was parsed; the reference cannot be generated.');
+        }
+
+        return $offsets;
+    }
+
+    /** The offset of one call inside an arm's body, or null when it has none. */
+    private static function first(string $body, string $needle): ?int
+    {
+        $at = strpos($body, $needle);
+
+        return false === $at ? null : $at;
+    }
+
+    /** The single-quoted reason a terminal or a guard carries, possibly empty. */
+    private static function reasonAt(string $body, int $at): string
+    {
+        $close = strpos($body, '(', $at);
+
+        if (false === $close) {
+            return '';
+        }
+
+        $rest = (string) substr($body, $close + 1);
+
+        return 1 === preg_match("/^\s*'([^']*)'/", $rest, $m) ? $m[1] : '';
+    }
+
+    /** The end of one arm's body: the next arm's anchor, or the table's. */
+    private static function bodyEnd(string $table, int $at): int
+    {
+        $next = strpos($table, self::ARM, $at + strlen(self::ARM));
+
+        return false === $next ? strlen($table) : (int) $next;
     }
 
     private static function table(string $source): string
@@ -169,74 +273,34 @@ final class SurfacesReference
         throw new \RuntimeException('Unbalanced braces in the dispatch table.');
     }
 
-    private static function armBody(string $table, int $offset): string
-    {
-        $call = (int) strpos($table, self::CALL, $offset);
-        $open = (int) strpos($table, '(', $call);
-        $depth = 0;
-        $length = strlen($table);
-
-        for ($i = $open; $i < $length; ++$i) {
-            if ('(' === $table[$i]) {
-                ++$depth;
-            } elseif (')' === $table[$i]) {
-                --$depth;
-
-                if (0 === $depth) {
-                    return substr($table, $call, $i + 1 - $call);
-                }
-            }
-        }
-
-        throw new \RuntimeException('Unbalanced parentheses in a dispatch arm.');
-    }
-
     private static function armName(string $preceding): string
     {
         // The arm's condition is everything before the match arrow that
-        // immediately precedes the SurfacePlan construction.
+        // immediately precedes the arm's anchor.
         $arrow = strrpos($preceding, '=>');
 
         if (false !== $arrow) {
             $preceding = (string) substr($preceding, 0, $arrow);
         }
 
-        return trim($preceding, " \t\r\n,");
+        // Everything up to the last comma before that arrow belongs to the
+        // previous arm — a condition carries no comma of its own. The first
+        // arm has no previous arm, and what precedes it is the table's brace.
+        $separator = strrpos($preceding, ',');
+
+        if (false === $separator) {
+            $separator = strrpos($preceding, '{');
+        }
+
+        if (false !== $separator) {
+            $preceding = (string) substr($preceding, $separator + 1);
+        }
+
+        return trim($preceding, " \t\r\n,{");
     }
 
     private static function cell(string $value): string
     {
         return '`'.$value.'`';
-    }
-
-    /**
-     * One row per arm; an arm the gate cannot fill throws.
-     *
-     * @return array{arm: string, surface: string, cacheability: string, scope: string, reason: string}
-     */
-    private static function row(string $arm, string $kind, string $body): array
-    {
-        $surface = 1 === preg_match('/new\s+([A-Za-z0-9_\\\\]+)/', $body, $m) ? $m[1] : '';
-        $cacheability = 1 === preg_match('/cacheability:\s*Cacheability::([A-Za-z]+)/', $body, $c) ? $c[1] : '';
-        $scope = 1 === preg_match('/fragmentScope:\s*FragmentScope::([A-Za-z]+)/', $body, $s) ? $s[1] : '';
-        $reason = 1 === preg_match("/reason:\s*'([^']*)'/", $body, $r) ? $r[1] : '';
-
-        if ('' === $surface) {
-            throw new \RuntimeException('A dispatch arm the reference cannot fill: '.$arm.' ('.$kind.').');
-        }
-
-        if ('uncacheable' === $kind) {
-            if ('' === $reason) {
-                throw new \RuntimeException('An Uncacheable arm without a reason fails the reference gate.');
-            }
-
-            return ['arm' => $arm, 'surface' => $surface, 'cacheability' => 'Uncacheable', 'scope' => 'Never', 'reason' => $reason];
-        }
-
-        if ('' === $cacheability || '' === $scope) {
-            throw new \RuntimeException('A wrapped arm without its Cacheability and FragmentScope fails the reference gate.');
-        }
-
-        return ['arm' => $arm, 'surface' => $surface, 'cacheability' => $cacheability, 'scope' => $scope, 'reason' => $reason];
     }
 }

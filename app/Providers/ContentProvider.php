@@ -2,8 +2,14 @@
 
 /**
  * The content feature's composition: the repository the render layer queries
- * core content through, the indexed-search filters, the search index's
- * migration, and the fragment group's invalidation.
+ * core content through, the search index's migration, and the fragment
+ * group's invalidation.
+ *
+ * The indexed-search plumbing — the clause, the fallback report, the two
+ * `posts_search` filters and their query vars — is `mahout-db`'s
+ * {@see \Iniznet\Mahout\Db\Search\SearchProvider}, registered by the
+ * composition root after {@see \Iniznet\Mahout\Db\DbProvider}. This provider
+ * only consumes the swap that provider declares.
  *
  * The declarations in config/content-types.php are registered on init
  * through the content package's Contracts surface; the starter declares none,
@@ -17,7 +23,6 @@ namespace Iniznet\Howdah\Providers;
 use Iniznet\Howdah\Exception\InvalidContentDeclaration;
 use Iniznet\Howdah\Exception\InvalidHookResult;
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Features\Content\MatchClause;
 use Iniznet\Howdah\Features\Content\PostMapper;
 use Iniznet\Howdah\Support\Cache\FragmentInvalidation;
 use Iniznet\Howdah\Support\Hooks;
@@ -27,9 +32,9 @@ use Iniznet\Mahout\Content\RestRoute;
 use Iniznet\Mahout\Content\Taxonomy;
 use Iniznet\Mahout\Db\AddSearchIndex;
 use Iniznet\Mahout\Db\Contracts\Migration;
-use Iniznet\Mahout\Db\Contracts\SearchIndexPresence;
 use Iniznet\Mahout\Db\Contracts\SqlConnection;
 use Iniznet\Mahout\Db\DdlEmitter;
+use Iniznet\Mahout\Db\Search\IndexedSearchSwap;
 use Iniznet\Mahout\Db\SearchIndex;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
@@ -61,8 +66,7 @@ final class ContentProvider implements ServiceProvider
 
         $container->set(new ContentRepository(
             mapper: new PostMapper(),
-            clause: MatchClause::fromWordPress(),
-            presence: $container->get(SearchIndexPresence::class),
+            search: $container->get(IndexedSearchSwap::class),
         ));
 
         // The filter is attached in register(), not boot(): the migration
@@ -110,31 +114,7 @@ final class ContentProvider implements ServiceProvider
             accepted_args: 0,
         );
 
-        $this->attachSearchFilters();
         $this->attachInvalidation($container);
-    }
-
-    /**
-     * The indexed search path: the clause and the relevance ordering travel
-     * on the query vars, and these two filters swap them in for a query that
-     * declared the indexed path. Every other query receives its argument
-     * back, unchanged.
-     */
-    private function attachSearchFilters(): void
-    {
-        \add_filter(
-            Hooks::POSTS_SEARCH,
-            static fn (mixed $search, \WP_Query $query): string => self::indexedClause($search, $query),
-            priority: 10,
-            accepted_args: 2,
-        );
-
-        \add_filter(
-            Hooks::POSTS_SEARCH_ORDERBY,
-            static fn (mixed $orderby, \WP_Query $query): string => self::indexedOrdering($orderby, $query),
-            priority: 10,
-            accepted_args: 2,
-        );
     }
 
     /** The fragment group's invalidation, coalesced per request. */
@@ -171,42 +151,5 @@ final class ContentProvider implements ServiceProvider
         $declared[] = $index;
 
         return $declared;
-    }
-
-    /** The clause core built, or the indexed clause for a declared query. */
-    private static function indexedClause(mixed $search, \WP_Query $query): string
-    {
-        $fragment = self::string($search);
-
-        if (true !== $query->get('howdah_indexed_search')) {
-            return $fragment;
-        }
-
-        return self::string($query->get('howdah_match_clause'));
-    }
-
-    /** The ordering core built, or the indexed relevance for a declared query. */
-    private static function indexedOrdering(mixed $orderby, \WP_Query $query): string
-    {
-        $ordering = self::string($orderby);
-
-        if (true !== $query->get('howdah_indexed_search')) {
-            return $ordering;
-        }
-
-        return self::string($query->get('howdah_match_orderby'));
-    }
-
-    /**
-     * Core's documented payload is a string. Anything else a subscriber
-     * added is refused, never coerced.
-     */
-    private static function string(mixed $value): string
-    {
-        if (!\is_string($value)) {
-            throw InvalidHookResult::notASearchFragment();
-        }
-
-        return $value;
     }
 }

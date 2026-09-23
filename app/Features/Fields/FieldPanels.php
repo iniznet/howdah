@@ -2,36 +2,41 @@
 
 /**
  * The declared field panels, loaded once from config/fields.php. Every admin
- * surface the field layer needs -- metaboxes, the save entry, the REST route
- * -- is derived from this collection and from nothing else, so a panel that
- * is not declared here does not exist anywhere.
+ * surface the field layer needs — the metaboxes, the save entry, the REST
+ * read bindings, the write-failure notice — is derived from this collection
+ * and from nothing else, so a panel that is not declared here does not exist
+ * anywhere.
+ *
+ * The collection is the theme's and the panel is the package's: the theme owns
+ * the declaration site, and the pairing every admin surface is built from is
+ * `mahout-fields`' `FieldPanel`. This class answers to the package's Panels
+ * contract, which is the only key the composition root binds it under.
  */
 
 declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Fields;
 
-/**
- * @implements \IteratorAggregate<int, FieldPanel>
- */
-final readonly class FieldPanels implements \IteratorAggregate, \Countable
+use Iniznet\Mahout\Fields\Contracts\Panels;
+use Iniznet\Mahout\Fields\FieldPanel;
+
+final readonly class FieldPanels implements Panels
 {
     /** @param list<FieldPanel> $panels */
-    public function __construct(private readonly array $panels)
+    public function __construct(private array $panels)
     {
     }
 
+    #[\Override]
     public function isEmpty(): bool
     {
         return [] === $this->panels;
     }
 
-    public function count(): int
-    {
-        return count($this->panels);
-    }
-
-    /** @return list<FieldPanel> */
+    /**
+     * @return list<FieldPanel>
+     */
+    #[\Override]
     public function forPostType(string $postType): array
     {
         return array_values(array_filter(
@@ -40,16 +45,10 @@ final readonly class FieldPanels implements \IteratorAggregate, \Countable
         ));
     }
 
-    /** @return list<\Iniznet\Mahout\Fields\FieldGroup> */
-    public function groups(): array
-    {
-        return array_map(
-            static fn (FieldPanel $panel): \Iniznet\Mahout\Fields\FieldGroup => $panel->group,
-            $this->panels,
-        );
-    }
-
-    /** @return \ArrayIterator<int, FieldPanel> */
+    /**
+     * @return \ArrayIterator<int, FieldPanel>
+     */
+    #[\Override]
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->panels);
