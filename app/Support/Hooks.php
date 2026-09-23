@@ -56,7 +56,7 @@ final class Hooks
      *
      * @filter
      *
-     * @param QueryContext $ctx the request facts
+     * @param \Iniznet\Mahout\Render\QueryContext $ctx the request facts
      */
     public const string SURFACE_CONTEXT = 'howdah/surface/context';
 
@@ -71,8 +71,8 @@ final class Hooks
      *
      * @filter
      *
-     * @param SurfacePlan  $plan the resolved plan
-     * @param QueryContext $ctx  the request facts
+     * @param \Iniznet\Mahout\Render\SurfacePlan  $plan the resolved plan
+     * @param \Iniznet\Mahout\Render\QueryContext $ctx  the request facts
      */
     public const string SURFACE_RESOLVE = 'howdah/surface/resolve';
 
@@ -84,9 +84,9 @@ final class Hooks
      *
      * @filter
      *
-     * @param string       $html    the rendered page
-     * @param Component    $surface the Surface that rendered it
-     * @param QueryContext $ctx     the request facts
+     * @param string                              $html    the rendered page
+     * @param \Iniznet\Mahout\Render\Component    $surface the Surface that rendered it
+     * @param \Iniznet\Mahout\Render\QueryContext $ctx     the request facts
      */
     public const string SURFACE_RENDERED = 'howdah/surface/rendered';
 

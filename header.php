@@ -7,4 +7,4 @@
 
 declare(strict_types=1);
 
-echo Iniznet\Howdah\Bootstrap::services()->get(Iniznet\Howdah\Render\Document::class)->opening();
+echo Iniznet\Howdah\Bootstrap::services()->get(Iniznet\Mahout\Render\Document::class)->opening();
