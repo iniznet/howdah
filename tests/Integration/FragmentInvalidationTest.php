@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Tests\Integration;
 
 use Iniznet\Howdah\Bootstrap;
-use Iniznet\Howdah\Render\CachedFragment;
-use Iniznet\Howdah\Render\Component;
-use Iniznet\Howdah\Render\FragmentCache;
-use Iniznet\Howdah\Render\FragmentKey;
 use Iniznet\Howdah\Support\Cache\FragmentInvalidation;
 use Iniznet\Howdah\Support\Hooks;
+use Iniznet\Mahout\Render\CachedFragment;
+use Iniznet\Mahout\Render\Component;
+use Iniznet\Mahout\Render\FragmentCache;
+use Iniznet\Mahout\Render\FragmentKey;
 
 /**
  * The fragment group's invalidation and its single-flight regeneration.

@@ -38,7 +38,7 @@ final class SurfacesReferenceTest extends TestCase
     {
         self::assertSame(
             [],
-            SurfacesReference::audit((string) file_get_contents(self::ROOT.'/app/Render/Surfaces.php')),
+            SurfacesReference::audit((string) file_get_contents(self::ROOT.'/app/Surfaces/Surfaces.php')),
             'every live arm declares its Cacheability, its FragmentScope and its reason.',
         );
     }
@@ -97,8 +97,8 @@ final class SurfacesReferenceTest extends TestCase
     private static function candidateRoot(string $table): string
     {
         $root = sys_get_temp_dir().'/howdah-surface-ref-'.uniqid();
-        mkdir($root.'/app/Render', 0777, true);
-        file_put_contents($root.'/app/Render/Surfaces.php', '<?php match (true) '."{\n".$table."\n");
+        mkdir($root.'/app/Surfaces', 0777, true);
+        file_put_contents($root.'/app/Surfaces/Surfaces.php', '<?php match (true) '."{\n".$table."\n");
 
         return $root;
     }

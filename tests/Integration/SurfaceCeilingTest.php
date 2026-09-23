@@ -11,16 +11,16 @@ use Iniznet\Howdah\Features\Content\Surfaces\ContentArchive;
 use Iniznet\Howdah\Features\Content\Surfaces\EmbedContent;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePage;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePost;
-use Iniznet\Howdah\Render\Document;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\QueryKind;
-use Iniznet\Howdah\Render\SiteProfile;
-use Iniznet\Howdah\Render\Surfaces\GenericList;
-use Iniznet\Howdah\Render\Surfaces\NotFound;
-use Iniznet\Howdah\Render\Surfaces\SearchResults;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Howdah\Surfaces\Arms\GenericList;
+use Iniznet\Howdah\Surfaces\Arms\NotFound;
+use Iniznet\Howdah\Surfaces\Arms\SearchResults;
 use Iniznet\Howdah\Tests\Support\CeilingProbe;
 use Iniznet\Howdah\Tests\Support\QueryCeilingExceeded;
+use Iniznet\Mahout\Render\Document;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\QueryKind;
+use Iniznet\Mahout\Render\SiteProfile;
+use Iniznet\Mahout\Ui\ClassResolver;
 
 /**
  * Every Surface's query ceiling, cold and warm, from the throughput budget's

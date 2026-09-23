@@ -272,8 +272,8 @@ final class AdminProvider implements ServiceProvider
         return [
             [\__('PHP version', 'howdah'), PHP_VERSION],
             ['WordPress', \get_bloginfo('version')],
-            [\__('Fragment cache group', 'howdah'), \Iniznet\Howdah\Render\FragmentCache::GROUP],
-            [\__('Fragment cache TTL', 'howdah'), (string) \Iniznet\Howdah\Render\FragmentCache::TTL_SECONDS],
+            [\__('Fragment cache group', 'howdah'), \Iniznet\Mahout\Render\FragmentCache::GROUP],
+            [\__('Fragment cache TTL', 'howdah'), (string) \Iniznet\Mahout\Render\FragmentCache::TTL_SECONDS],
         ];
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Tests\Unit;
 
-use Iniznet\Howdah\Render\Cacheability;
 use Iniznet\Howdah\Support\Cache\HeaderPolicy;
+use Iniznet\Mahout\Render\Cacheability;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -17,7 +17,7 @@ namespace Iniznet\Howdah\Tests\Support;
  */
 final class SurfacesReference
 {
-    private const string TABLE_PATH = '/app/Render/Surfaces.php';
+    private const string TABLE_PATH = '/app/Surfaces/Surfaces.php';
 
     private const string CALL = 'SurfacePlan::';
 
@@ -76,7 +76,7 @@ final class SurfacesReference
         }
 
         $header = "# Surfaces reference\n\n"
-            ."Generated from app/Render/Surfaces.php by tests/Support/SurfacesReference.php.\n"
+            ."Generated from app/Surfaces/Surfaces.php by tests/Support/SurfacesReference.php.\n"
             ."One row per dispatch arm: the Surface that renders the request, its declared\n"
             ."cacheability class, its fragment scope and, for an Uncacheable arm, the\n"
             ."reason it is not stored. A dispatch arm with no declaration fails a test and\n"

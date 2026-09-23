@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Tests\Integration;
 
-use Iniznet\Howdah\Render\Document;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Mahout\Render\Document;
+use Iniznet\Mahout\Ui\ClassResolver;
 
 /**
  * The document shell's rendered structure. The shell fires wp_head and

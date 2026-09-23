@@ -7,16 +7,16 @@ namespace Iniznet\Howdah\Tests\Integration;
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Howdah\Exception\InvalidHookResult;
 use Iniznet\Howdah\Features\Content\Surfaces\EmbedContent;
-use Iniznet\Howdah\Render\Cacheability;
-use Iniznet\Howdah\Render\CachedFragment;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\QueryKind;
-use Iniznet\Howdah\Render\SiteProfile;
-use Iniznet\Howdah\Render\SurfacePlan;
-use Iniznet\Howdah\Render\Surfaces;
-use Iniznet\Howdah\Render\Surfaces\GenericList;
-use Iniznet\Howdah\Render\Surfaces\NotFound;
-use Iniznet\Howdah\Render\Surfaces\SearchResults;
+use Iniznet\Howdah\Surfaces\Arms\GenericList;
+use Iniznet\Howdah\Surfaces\Arms\NotFound;
+use Iniznet\Howdah\Surfaces\Arms\SearchResults;
+use Iniznet\Howdah\Surfaces\Surfaces;
+use Iniznet\Mahout\Render\Cacheability;
+use Iniznet\Mahout\Render\CachedFragment;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\QueryKind;
+use Iniznet\Mahout\Render\SiteProfile;
+use Iniznet\Mahout\Render\SurfacePlan;
 
 /**
  * The dispatch table, table-driven over QueryContext fixtures: every
@@ -184,7 +184,7 @@ final class SurfacesDispatchTest extends \WP_UnitTestCase
 
     public function testASurfaceIsReplacedThroughTheResolveFilter(): void
     {
-        $replacement = new class implements \Iniznet\Howdah\Render\Component {
+        $replacement = new class implements \Iniznet\Mahout\Render\Component {
             public function render(): string
             {
                 return 'replaced';
@@ -194,7 +194,7 @@ final class SurfacesDispatchTest extends \WP_UnitTestCase
         add_filter('howdah/surface/resolve', static fn (SurfacePlan $plan): SurfacePlan => new SurfacePlan(
             $replacement,
             Cacheability::Private,
-            \Iniznet\Howdah\Render\FragmentScope::Never,
+            \Iniznet\Mahout\Render\FragmentScope::Never,
             'a child theme replaced the Surface through the documented seam',
         ));
 

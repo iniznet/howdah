@@ -7,13 +7,13 @@ namespace Iniznet\Howdah\Tests\Integration;
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePost;
-use Iniznet\Howdah\Render\CachedFragment;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\QueryKind;
-use Iniznet\Howdah\Render\SiteProfile;
-use Iniznet\Howdah\Render\Surfaces;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Howdah\Surfaces\Surfaces;
 use Iniznet\Howdah\Tests\Support\CeilingProbe;
+use Iniznet\Mahout\Render\CachedFragment;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\QueryKind;
+use Iniznet\Mahout\Render\SiteProfile;
+use Iniznet\Mahout\Ui\ClassResolver;
 
 /**
  * The first Shared cache arm (CAC-09): a single post's Surface is a pure

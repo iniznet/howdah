@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidEntryDeclaration;
-use Iniznet\Howdah\Support\ClassResolver;
 use Iniznet\Howdah\Support\FileManifest;
 use Iniznet\Mahout\Assets\AssetsConfig;
 use Iniznet\Mahout\Assets\DevMode;
@@ -13,6 +12,7 @@ use Iniznet\Mahout\Assets\EntryList;
 use Iniznet\Mahout\Assets\EntryPoint;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
+use Iniznet\Mahout\Ui\ClassResolver;
 
 /**
  * Declares the two build artifacts the asset pipeline consumes: the manifest

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Tests\Integration;
 
-use Iniznet\Howdah\Render\Component;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\QueryKind;
-use Iniznet\Howdah\Render\SiteProfile;
-use Iniznet\Howdah\Render\SurfaceErrorBoundary;
-use Iniznet\Howdah\Support\ClassResolver;
 use Iniznet\Mahout\Kernel\Diagnostics;
 use Iniznet\Mahout\Kernel\Environment;
 use Iniznet\Mahout\Kernel\Internal\WpdbQuerySource;
+use Iniznet\Mahout\Render\Component;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\QueryKind;
+use Iniznet\Mahout\Render\SiteProfile;
+use Iniznet\Mahout\Render\SurfaceErrorBoundary;
+use Iniznet\Mahout\Ui\ClassResolver;
 
 /**
  * The error boundary's contract: a Surface returns the page or throws.
@@ -41,14 +41,14 @@ final class SurfaceErrorBoundaryTest extends \WP_UnitTestCase
     public function testTheFailureIsRecordedAndTheSeamFires(): void
     {
         $fired = [];
-        add_action('howdah/surface/failed', static function (\Throwable $e, string $reference) use (&$fired): void {
+        add_action(\Iniznet\Mahout\Render\Hooks::SURFACE_FAILED, static function (\Throwable $e, string $reference) use (&$fired): void {
             $fired[] = [$e->getMessage(), $reference];
         }, 10, 2);
 
         $html = $this->boundary(self::throwing('boom'), self::production())->render();
 
         self::assertStringContainsString('Something went wrong', $html);
-        self::assertCount(1, $fired, 'howdah/surface/failed fired once, with the failure and the reference.');
+        self::assertCount(1, $fired, 'mahout/render/surface_failed fired once, with the failure and the reference.');
         self::assertSame('boom', $fired[0][0]);
         self::assertNotSame('', $fired[0][1], 'the reference Diagnostics returned is not empty.');
     }

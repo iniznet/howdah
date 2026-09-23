@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Support\Cache;
 
-use Iniznet\Howdah\Render\FragmentCache;
 use Iniznet\Howdah\Support\Hooks;
+use Iniznet\Mahout\Render\FragmentCache;
 
 final class FragmentInvalidation
 {

@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Providers;
 
 use Iniznet\Howdah\Exception\InvalidHookResult;
-use Iniznet\Howdah\Render\Cacheability;
-use Iniznet\Howdah\Render\FragmentCache;
-use Iniznet\Howdah\Render\FragmentKey;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\Surfaces;
 use Iniznet\Howdah\Support\Cache\HeaderPolicy;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Support\Request;
+use Iniznet\Howdah\Surfaces\Surfaces;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
 use Iniznet\Mahout\Kernel\Diagnostics;
 use Iniznet\Mahout\Kernel\Environment;
 use Iniznet\Mahout\Kernel\Level;
+use Iniznet\Mahout\Render\Cacheability;
+use Iniznet\Mahout\Render\FragmentCache;
+use Iniznet\Mahout\Render\FragmentKey;
+use Iniznet\Mahout\Render\QueryContext;
 
 /**
  * The render pipeline's composition: the fragment store is bound here, and

@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
-use Iniznet\Howdah\Components\Message\Message;
-use Iniznet\Howdah\Components\Post\ArchiveHeading;
-use Iniznet\Howdah\Components\Post\Pagination;
-use Iniznet\Howdah\Components\Post\PostCard;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Howdah\Features\Content\PostList;
-use Iniznet\Howdah\Render\Component;
-use Iniznet\Howdah\Render\Document;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\Stack;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Mahout\Render\Component;
+use Iniznet\Mahout\Render\Document;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\Stack;
+use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Message\Message;
+use Iniznet\Mahout\Ui\Components\Post\ArchiveHeading;
+use Iniznet\Mahout\Ui\Components\Post\Pagination;
+use Iniznet\Mahout\Ui\Components\Post\PostCard;
 
 final readonly class ContentArchive implements Component
 {

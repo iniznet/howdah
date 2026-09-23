@@ -19,10 +19,8 @@ use Iniznet\Howdah\Providers\ContentProvider;
 use Iniznet\Howdah\Providers\EditorProvider;
 use Iniznet\Howdah\Providers\RenderProvider;
 use Iniznet\Howdah\Providers\ThemeProvider;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\SurfaceErrorBoundary;
-use Iniznet\Howdah\Render\Surfaces;
 use Iniznet\Howdah\Support\Hooks;
+use Iniznet\Howdah\Surfaces\Surfaces;
 use Iniznet\Mahout\Assets\AssetsProvider as AssetsPackageProvider;
 use Iniznet\Mahout\Content\ContentProvider as ContentPackageProvider;
 use Iniznet\Mahout\Db\DbProvider;
@@ -31,6 +29,8 @@ use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Diagnostics;
 use Iniznet\Mahout\Kernel\Environment;
 use Iniznet\Mahout\Kernel\Kernel;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\SurfaceErrorBoundary;
 
 final class Bootstrap
 {
@@ -88,7 +88,7 @@ final class Bootstrap
             ctx: $ctx,
             diagnostics: $services->get(Diagnostics::class),
             environment: $services->get(Environment::class),
-            classes: $services->get(Support\ClassResolver::class),
+            classes: $services->get(\Iniznet\Mahout\Ui\ClassResolver::class),
         );
 
         $html = $component->render();

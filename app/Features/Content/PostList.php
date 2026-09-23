@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content;
 
+use Iniznet\Mahout\Content\PostData;
+
 final readonly class PostList
 {
     /**

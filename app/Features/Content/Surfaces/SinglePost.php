@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
-use Iniznet\Howdah\Components\Post\Pagination;
-use Iniznet\Howdah\Components\Post\PostBody;
-use Iniznet\Howdah\Components\Post\PostMeta;
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Features\Content\PostData;
-use Iniznet\Howdah\Render\Component;
-use Iniznet\Howdah\Render\Document;
-use Iniznet\Howdah\Render\Exception\SurfaceDataMissing;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Render\Stack;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Mahout\Content\PostData;
+use Iniznet\Mahout\Render\Component;
+use Iniznet\Mahout\Render\Document;
+use Iniznet\Mahout\Render\Exception\SurfaceDataMissing;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\Stack;
+use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Post\Pagination;
+use Iniznet\Mahout\Ui\Components\Post\PostBody;
+use Iniznet\Mahout\Ui\Components\Post\PostMeta;
 
 final readonly class SinglePost implements Component
 {

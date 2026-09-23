@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content;
 
-use Iniznet\Howdah\Render\Exception\SurfaceDataMissing;
 use Iniznet\Howdah\Support\Hooks;
+use Iniznet\Mahout\Content\PostData;
+use Iniznet\Mahout\Content\PostTerm;
+use Iniznet\Mahout\Render\Exception\SurfaceDataMissing;
 
 final readonly class PostMapper
 {

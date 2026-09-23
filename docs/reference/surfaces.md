@@ -1,6 +1,6 @@
 # Surfaces reference
 
-Generated from app/Render/Surfaces.php by tests/Support/SurfacesReference.php.
+Generated from app/Surfaces/Surfaces.php by tests/Support/SurfacesReference.php.
 One row per dispatch arm: the Surface that renders the request, its declared
 cacheability class, its fragment scope and, for an Uncacheable arm, the
 reason it is not stored. A dispatch arm with no declaration fails a test and

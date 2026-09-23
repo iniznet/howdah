@@ -15,13 +15,13 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
-use Iniznet\Howdah\Components\Post\EmbedBody;
 use Iniznet\Howdah\Features\Content\ContentRepository;
-use Iniznet\Howdah\Render\Component;
-use Iniznet\Howdah\Render\EmbedDocument;
-use Iniznet\Howdah\Render\Exception\SurfaceDataMissing;
-use Iniznet\Howdah\Render\QueryContext;
-use Iniznet\Howdah\Support\ClassResolver;
+use Iniznet\Mahout\Render\Component;
+use Iniznet\Mahout\Render\EmbedDocument;
+use Iniznet\Mahout\Render\Exception\SurfaceDataMissing;
+use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Post\EmbedBody;
 
 final readonly class EmbedContent implements Component
 {

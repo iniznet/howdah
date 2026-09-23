@@ -102,7 +102,6 @@ final class Hooks
      * @param \Throwable $e         the failure
      * @param string     $reference the support reference Diagnostics returned
      */
-    public const string SURFACE_FAILED = 'howdah/surface/failed';
 
     /**
      * The cache purge seam. The theme owns the seam and emits this action

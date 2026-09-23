@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Support\Cache;
 
-use Iniznet\Howdah\Render\Cacheability;
+use Iniznet\Mahout\Render\Cacheability;
 
 final readonly class HeaderPolicy
 {

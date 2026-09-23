@@ -10,19 +10,44 @@
         "howdah"
     ],
     "repositories": [
-        { "type": "vcs", "url": "https://github.com/iniznet/mahout-kernel.git" },
-        { "type": "vcs", "url": "https://github.com/iniznet/mahout-assets.git" },
-        { "type": "vcs", "url": "https://github.com/iniznet/mahout-content.git" },
-        { "type": "vcs", "url": "https://github.com/iniznet/mahout-fields.git" },
-        { "type": "vcs", "url": "https://github.com/iniznet/mahout-db.git" }
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-kernel.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-render.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-ui.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-assets.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-content.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-fields.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/iniznet/mahout-db.git"
+        }
     ],
     "require": {
         "php": ">=8.4",
         "iniznet/mahout-kernel": "^1.0",
         "iniznet/mahout-assets": "^1.0",
+        "iniznet/mahout-render": "^1.0",
         "iniznet/mahout-content": "^1.0",
         "iniznet/mahout-fields": "^1.0",
-        "iniznet/mahout-db": "^1.0"
+        "iniznet/mahout-db": "^1.0",
+        "iniznet/mahout-ui": "^1.0"
     },
     "require-dev": {
         "iniznet/mahout-devtools": "^1.0"
@@ -73,5 +98,7 @@
         "branch-alias": {
             "dev-main": "1.0.x-dev"
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

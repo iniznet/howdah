@@ -17,8 +17,9 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content;
 
-use Iniznet\Howdah\Render\Exception\SurfaceDataMissing;
+use Iniznet\Mahout\Content\PostData;
 use Iniznet\Mahout\Db\Contracts\SearchIndexPresence;
+use Iniznet\Mahout\Render\Exception\SurfaceDataMissing;
 
 final readonly class ContentRepository
 {

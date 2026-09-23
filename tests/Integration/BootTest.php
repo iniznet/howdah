@@ -25,7 +25,7 @@ final class BootTest extends \WP_UnitTestCase
             \Iniznet\Mahout\Fields\Contracts\FieldRegistry::class,
             \Iniznet\Mahout\Fields\Contracts\FieldReader::class,
             \Iniznet\Mahout\Fields\Contracts\FieldWriter::class,
-            \Iniznet\Howdah\Support\ClassResolver::class,
+            \Iniznet\Mahout\Ui\ClassResolver::class,
         ];
     }
 

@@ -19,7 +19,6 @@ use Iniznet\Howdah\Exception\InvalidHookResult;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Howdah\Features\Content\MatchClause;
 use Iniznet\Howdah\Features\Content\PostMapper;
-use Iniznet\Howdah\Render\FragmentCache;
 use Iniznet\Howdah\Support\Cache\FragmentInvalidation;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Mahout\Content\Contracts\Registrar;
@@ -34,6 +33,7 @@ use Iniznet\Mahout\Db\DdlEmitter;
 use Iniznet\Mahout\Db\SearchIndex;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Kernel\Contracts\ServiceProvider;
+use Iniznet\Mahout\Render\FragmentCache;
 
 final class ContentProvider implements ServiceProvider
 {
