@@ -1,6 +1,6 @@
 # AGENTS.md — howdah discipline contract
 
-This file is the working contract for anyone — human or agent — writing code in this repository. It summarises `docs/planning/`. When the two disagree, the planning docs win and this file gets fixed.
+This file is the working contract for anyone — human or agent — writing code in this repository. It is the complete public contract: every rule a contributor is bound by is stated here in full, and every rule here is enforced by a gate in this repository. The maintainers keep a private, untracked planning corpus in the working checkout; it informs this file and never overrides it — a rule that exists only there does not exist.
 
 **Stack:** WordPress 7.1+ · PHP 8.4+ · Vite (build only) · PHPUnit · PHPStan max · Psalm (taint) · Rector · PHP-CS-Fixer
 
@@ -23,7 +23,7 @@ This file is the working contract for anyone — human or agent — writing code
 
 Runtime distribution — services, an internal RPC layer, a message broker beyond `wp_cron`, separately deployed module processes — is a non-goal. Seven packages are a publishing and contribution model, not a deployment topology; `NAM-02` (one repository per package) and `ARC-23` (one monolith at runtime) are independent decisions.
 
-The rest of the refusal list is in [docs/planning/19-open-source-and-contribution.md](./docs/planning/19-open-source-and-contribution.md) §10, and the non-goals in [docs/planning/00-overview.md](./docs/planning/00-overview.md). A pull request whose design a decision row has already rejected is closed with a link to the row.
+Also refused, each for the reason its decision states: MVC (WordPress owns resolution, persistence and no controller concept); facades, service locators and global helpers (untraceable dependencies); reflection-based autowiring (container resolution must be statically traceable); traits as a code-sharing mechanism; the template hierarchy as a render mechanism; third-party PHP runtime libraries (only our own packages, plus analysis tooling); a theme-owned rate limiter, bot filter or consent surface; a Packagist or npm publishing lane. A pull request whose design one of these refusals has already rejected is closed with a pointer to the refusal rather than debated; a contributor who believes the refusal is wrong changes the refusal first, with the rejected alternative and the reason.
 
 ---
 
@@ -102,27 +102,27 @@ app/Features/Series/
 | `__get`, `__set`, `__call`, dynamic properties | Invisible to static analysis |
 | Trait properties, or `$this->` from a trait calling undeclared members | Concealed dependencies |
 | `new \Exception(...)` or a public exception constructor | Untraceable, message drift |
-| `error_log()` outside `Diagnostics` | Production noise; see `docs/planning/12-errors-and-diagnostics.md` |
-| `$_GET` / `$_POST` / `$_REQUEST` / `$_SERVER` / `$_FILES` / `$_COOKIE` outside `Iniznet\Howdah\Support\Request` | No request boundary; see `docs/planning/10-security.md` |
+| `error_log()` outside `Diagnostics` | Production noise; one owner for diagnostics output |
+| `$_GET` / `$_POST` / `$_REQUEST` / `$_SERVER` / `$_FILES` / `$_COOKIE` outside `Iniznet\Howdah\Support\Request` | No request boundary |
 | Inline `<script>` or `<style>` echo | CSP hygiene and cacheability |
 | PHPStan baselines, `@phpstan-ignore` without a reason | Hides problems instead of fixing them |
 | `mixed` where a union is expressible | Static analysis stops working |
 | `START TRANSACTION`, `COMMIT` or `ROLLBACK` outside `mahout-db`'s gateway | One owner for the transaction boundary |
-| `wp_cache_flush()`, and any `wp_cache_flush_group()` outside the gated cache service | Core returns `false` and emits `_doing_it_wrong()` when the backend reports no support; the fallback is a salt bump. See `docs/planning/13-caching.md` |
+| `wp_cache_flush()`, and any `wp_cache_flush_group()` outside the gated cache service | Core returns `false` and emits `_doing_it_wrong()` when the backend reports no support; the fallback is a salt bump |
 | `setcookie()` or `setrawcookie()` | The theme sets no cookie |
 | `WP_List_Table` subclasses, and any quick-edit or bulk-edit field write | Neither path can carry the save lifecycle, and neither has a post lock |
-| A canonical, `robots` or `description` meta tag, and any hand-set security header | Another party owns those; see `docs/planning/10-security.md` |
+| A canonical, `robots` or `description` meta tag, and any hand-set security header | Another party owns those |
 | Reflection in production | The fragment key is supplied explicitly; reflection hides the key's contents |
 | An arm of the dispatch table that reaches no cacheability terminal, or an `Uncacheable` arm with no stated reason | The builder has no default and no terminal-less path; such an arm fails a test and fails the reference gate |
-| A nonce, a per-user value or a per-role value in a `Shared` Surface | A shared cache would replay one visitor's token to another — `docs/planning/13-caching.md` |
+| A nonce, a per-user value or a per-role value in a `Shared` Surface | A shared cache would replay one visitor's token to another |
 | A cache key whose parts are not enumerable from the site's own content graph | A key space an anonymous visitor can invent is a cache an anonymous visitor can fill |
-| A `Cache-Control`, `Vary` or validator header outside the policy in `docs/planning/13-caching.md` §2 | One policy, one owner, one place |
-| A vendor purge API call, or any attempt by the theme to purge a page cache or a CDN | The theme owns the seam and the client owns the endpoint — `docs/planning/13-caching.md` §5 |
-| A `$wpdb` statement against a howdah table with neither a `LIMIT` nor a primary-key equality | An unbounded statement is a scan — `docs/planning/18-throughput.md` §3 |
+| A `Cache-Control`, `Vary` or validator header set anywhere but the render pipeline's cacheability plan | One policy, one owner, one place: the plan that declares a Surface `Shared` is the only component that knows what a shared cache may be told |
+| A vendor purge API call, or any attempt by the theme to purge a page cache or a CDN | The theme owns the seam and the client owns the endpoint |
+| A `$wpdb` statement against a howdah table with neither a `LIMIT` nor a primary-key equality | An unbounded statement is a scan |
 | A schema query such as `information_schema` on a request path | A schema fact is read once into a non-autoloaded option |
-| `LIKE` with a leading wildcard over `post_title`, `post_excerpt` or `post_content` | Measured at 150× to 450× the indexed path — `docs/planning/18-throughput.md` §4 |
+| `LIKE` with a leading wildcard over `post_title`, `post_excerpt` or `post_content` | Measured at 150× to 450× the indexed path |
 | `sleep()`, `usleep()`, `set_time_limit()`, or a wait-for-lock loop on a request path | A waiting PHP worker is a worker unavailable to every other request |
-| A per-request log line, or query logging, in production | A cost that grows linearly with traffic — `docs/planning/18-throughput.md` §6 |
+| A per-request log line, or query logging, in production | A cost that grows linearly with traffic |
 
 ---
 
@@ -166,7 +166,7 @@ Expected absence returns `?T`. Broken invariants throw.
 
 Repeater payloads are versioned (`{"v":1,"items":[...]}`) and encoded by a dedicated codec, never by the DTO. `JSON_THROW_ON_ERROR` always.
 
-**Limitation:** a `Table` field cannot be bound as a block attribute. Block editor meta binding goes through `register_post_meta`, which only sees meta. If it must live in the editor's meta sidebar, it must be `Meta`. Its write path is the field panel, specified in `docs/planning/16-admin-and-editor.md`.
+**Limitation:** a `Table` field cannot be bound as a block attribute. Block editor meta binding goes through `register_post_meta`, which only sees meta. If it must live in the editor's meta sidebar, it must be `Meta`. Its write path is the field panel and the field REST route, and nothing else.
 
 **Sensitive values** go in neither target. Constants or environment only.
 
@@ -175,14 +175,13 @@ Repeater payloads are versioned (`{"v":1,"items":[...]}`) and encoded by a dedic
 ## Admin and editor
 
 - **The admin UI is not optional.** `Table` fields cannot be bound as block attributes, so the field panel and the field REST route are the only write path for `Table` storage.
-- `mahout-fields` renders every field control and owns the save lifecycle, the editor registry and the field route. The theme registers screens, renders the shell around them, and styles the controls.
+- `mahout-fields` renders every field control, styles them by default (a scoped stylesheet enqueued only on its own screens), and owns the save lifecycle, the editor registry and the field route. The theme registers screens and renders the shell around them. Taking styling over — globally, or per field through `Contracts\FieldUiPolicy` — removes the default stylesheet and the default classes; no cascade fight.
 - Registration is greppable: `Bootstrap.php` names every provider, `AdminProvider` names every menu page, notice and list column the theme owns, and `mahout-fields`' `Admin\FieldsUiProvider` — registered after `FieldsProvider` and driven by the host's `Contracts\Panels` and `Contracts\OptionScreens` bindings — attaches the metaboxes, the save entry, the field route, the write-failure notice and the settings pages the declared panels and screens imply. A theme that declares no panel and no option screen attaches none of them. No admin registration at file scope.
 - **The save lifecycle order is fixed.** Autosave guard, revision guard, foreign-form guard, post lock, capability, nonce, field shape, sanitise, store, record. It runs in that order on both the classic and the REST path, because core checks the post lock on the classic path and not on the REST one.
 - A nonce failure never calls `wp_die()` inside `save_post`; core has already written the post by then.
 - `Meta` fields use `register_post_meta` with `show_in_rest`. `Table` fields are read through `register_rest_field` and written through the field route.
 - No `WP_List_Table` subclass, and no quick-edit or bulk-edit field write.
 - No admin screen without a capability, and no capability compared by role.
-- Full contract: `docs/planning/16-admin-and-editor.md`.
 
 ---
 
@@ -196,7 +195,6 @@ Repeater payloads are versioned (`{"v":1,"items":[...]}`) and encoded by a dedic
 - Every migration implements `up()` and `down()`. An irreversible reversal throws and blocks the whole rollback run before any statement executes.
 - Migrations run from `wp mahout migrate`, from `after_switch_theme`, or lazily on `admin_init` for a user with `manage_options`. Never on the front end, never under AJAX or cron.
 - The revision mirror is a registered meta key with `revisions_enabled => true`; core copies and restores it, and the field layer rehydrates the table afterwards.
-- Full rule: `docs/planning/03-storage-and-fields.md` under "Data integrity".
 
 ---
 
@@ -221,7 +219,7 @@ howdah/{domain}/{event}       # theme
 | 20 | post-process |
 | `PHP_INT_MAX` | enforcement |
 
-New hooks are documented first, then added to the inventory in `docs/planning/04-hooks.md`. `composer hooks:check` fails if the generated reference is stale.
+A new hook is documented in the same change that introduces it. `composer hooks:check` fails if the generated reference is stale.
 
 ---
 
@@ -232,7 +230,6 @@ New hooks are documented first, then added to the inventory in `docs/planning/04
 - **The theme owns the purge seam; the client owns the endpoint.** Invalidation emits `howdah/cache/purge`; no vendor API is called.
 - **Every statement is bounded.** A `LIMIT` or a primary-key equality, always. A sweep is chunked by key, resumable and runtime-capped, and never runs on a request path.
 - **Search is an index, not a scan.** The `FULLTEXT` index on `wp_posts`, the tokeniser, the `MATCH` clause, the two core filters and the loud fallback report are all owned by `mahout-db` (`Search\SearchTerms`, `Search\IndexedSearchSwap`, `Search\SearchProvider`). The theme's repository states the search intent and takes the query args from the swap; it declares no search grammar of its own.
-- Full rule: `docs/planning/13-caching.md` and `docs/planning/18-throughput.md`.
 
 ---
 
@@ -259,7 +256,7 @@ Repository query defaults:
 
 Every new Surface gets a query-ceiling test. Options over ~1 KB are stored `autoload='no'`.
 
-Production prerequisites, asserted by `doctor` and not optional for the declared capacity to hold: OPcache enabled with `validate_timestamps=0` and a preload file, an autoloader generated with `--classmap-authoritative --optimize`, and an `innodb_buffer_pool_size` sized to the working set. None of them is required for correctness; all of them are required for the numbers in `docs/planning/18-throughput.md` to be true.
+Production prerequisites, asserted by `doctor` and not optional for the declared capacity to hold: OPcache enabled with `validate_timestamps=0` and a preload file, an autoloader generated with `--classmap-authoritative --optimize`, and an `innodb_buffer_pool_size` sized to the working set. None of them is required for correctness; all of them are required for the theme's declared capacity numbers to hold.
 
 ---
 
@@ -269,16 +266,16 @@ Production prerequisites, asserted by `doctor` and not optional for the declared
 
 **Banned:** static access to anything that queries, caches, mutates or resolves a collaborator — repositories, field readers, field query builders, registries, containers.
 
-**Boundary and composition-root exceptions, and nothing else:** `Request::fromSuperglobals()`, `Bootstrap::run()`, `Bootstrap::render()`, `Bootstrap::services()`, `Surfaces::resolve()`. The test is not "is it static" but "does it resolve a collaborator". Full rule: `docs/planning/01-architecture.md`.
+**Boundary and composition-root exceptions, and nothing else:** `Request::fromSuperglobals()`, `Bootstrap::run()`, `Bootstrap::render()`, `Bootstrap::services()`, `Surfaces::resolve()`. The test is not "is it static" but "does it resolve a collaborator".
 
 ---
 
 ## Errors and security
 
-- **Failures are loud; output is defined.** A thrown exception is recorded through `Diagnostics` at `critical`. Development rethrows it. Production renders the Error Surface with status `500`. No silent fallback, no substituted data, no white screen. The error boundary is a defined render, not a degraded mode — law 3 still governs data and behaviour. Full policy: `docs/planning/12-errors-and-diagnostics.md`.
-- **Request input has one boundary.** Superglobals are read only inside `Iniznet\Howdah\Support\Request`, which is injected through constructors. State-changing requests use POST, a verified nonce, and a capability check. A REST route without an explicit `permission_callback` fails the build. Full rules: `docs/planning/10-security.md`.
+- **Failures are loud; output is defined.** A thrown exception is recorded through `Diagnostics` at `critical`. Development rethrows it. Production renders the Error Surface with status `500`. No silent fallback, no substituted data, no white screen. The error boundary is a defined render, not a degraded mode — law 3 still governs data and behaviour.
+- **Request input has one boundary.** Superglobals are read only inside `Iniznet\Howdah\Support\Request`, which is injected through constructors. State-changing requests use POST, a verified nonce, and a capability check. A REST route without an explicit `permission_callback` fails the build.
 - **Sanitize on write, escape on read.** Exactly one escape per output; double escaping is a defect, not defensiveness.
-- **User data does not live in a theme-owned table.** Anything that must survive a theme switch belongs in a plugin. See `docs/planning/14-boundaries.md`.
+- **User data does not live in a theme-owned table.** Anything that must survive a theme switch belongs in a plugin.
 
 ---
 
@@ -304,11 +301,11 @@ composer check      # all of the above
 
 ## Contributing
 
-Seven package repositories and one theme. Before opening a pull request, read the change-routing rule in [docs/planning/19-open-source-and-contribution.md](./docs/planning/19-open-source-and-contribution.md) §3 — it answers "which repository does this change belong in?" by kind of change, not by file path.
+Seven package repositories and one theme. Route a change by its **kind**, not by file path: a change to how a package behaves goes to that package's repository; a change that must touch two repositories at once is a contract change (below); a change to a rule on this page changes this page in the same commit.
 
 - A change that cannot be made in one repository is a **contract change**. It follows the procedure in 19 §4: add the new surface, deprecate the old one, tag a package minor, adopt in consumers in dependency order (kernel, then assets, db and content, then fields, then the theme), and remove the old surface only at the next major.
 - `Contracts/` is a public promise (19 §7). Semantic versioning governs it; an `@internal` class may change in a patch release.
-- A new decision needs a row in [docs/planning/09-decisions.md](./docs/planning/09-decisions.md) in the same change, and a changed rule corrects the affected planning document **and this file** in the same change.
+- A new decision is recorded in the same change that introduces it: the rule lands here, with the rejected alternative and the reason, before or with the code that implements it. A decision that exists only in conversation does not exist.
 - A fork pull request runs the same `composer check`, because `mahout-devtools` resolves over VCS with no secret. The quality workflow is triggered by `pull_request`, never `pull_request_target` (19 §5).
 - Every repository references the analyzer configuration and architecture rules from `mahout-devtools`; a repository carrying its own copy has diverged (19 §6).
 
@@ -354,26 +351,11 @@ No coverage target. Coverage rewards testing getters.
 
 ---
 
-## Reference
+## Scope of this document
 
-| Need | Read |
-|---|---|
-| Full architecture | `docs/planning/01-architecture.md` |
-| Render pipeline | `docs/planning/02-render-pipeline.md` |
-| Storage and fields | `docs/planning/03-storage-and-fields.md` |
-| Hook contract | `docs/planning/04-hooks.md` |
-| Conventions | `docs/planning/05-conventions.md` |
-| Performance | `docs/planning/06-performance.md` |
-| Gates | `docs/planning/07-quality-and-enforcement.md` |
-| Packages and scaffold | `docs/planning/08-packages-and-scaffold.md` |
-| Why decisions were made | `docs/planning/09-decisions.md` |
-| Security | `docs/planning/10-security.md` |
-| i18n and accessibility | `docs/planning/11-i18n-and-accessibility.md` |
-| Errors and diagnostics | `docs/planning/12-errors-and-diagnostics.md` |
-| Caching | `docs/planning/13-caching.md` |
-| Boundaries and privacy | `docs/planning/14-boundaries.md` |
-| Operations and conventions | `docs/planning/15-operations-and-conventions.md` |
-| Admin and editor | `docs/planning/16-admin-and-editor.md` |
-| Delivery roadmap, exit criteria, definition of done | `docs/planning/17-delivery-roadmap.md` |
-| Throughput, the scale envelope and production prerequisites | `docs/planning/18-throughput.md` |
-| Licence, contribution, change routing, fork pull requests, security disclosure | `docs/planning/19-open-source-and-contribution.md` |
+This file is the repository's complete public contract. The maintainers keep a
+private planning corpus in the working checkout — architecture rationale,
+rejected alternatives, delivery sequencing, capacity economics — deliberately
+untracked: a consumer of the code reads the rules, not the reasoning behind
+them. Nothing in that corpus weakens a rule stated here; a rule that is not
+stated here is not a rule.
