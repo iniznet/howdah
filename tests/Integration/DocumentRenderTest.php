@@ -24,7 +24,7 @@ final class DocumentRenderTest extends \WP_UnitTestCase
         $markup = $this->document()->render();
 
         self::assertSame(1, substr_count($markup, '<main'), 'exactly one main element');
-        self::assertSame(1, substr_count($markup, '<h1'), 'exactly one h1, supplied by Document');
+        self::assertSame(0, substr_count($markup, '<h1'), 'no page heading from the shell — each Surface owns its heading');
         self::assertSame(1, substr_count($markup, 'href="#main"'), 'the skip link targets main');
         self::assertSame(1, substr_count($markup, 'Skip to content'), 'exactly one skip link, translatable');
     }
@@ -36,7 +36,6 @@ final class DocumentRenderTest extends \WP_UnitTestCase
         self::assertMatchesRegularExpression('/<body class="[^"]*"/', $markup, 'body_class renders inside a quoted attribute');
         self::assertMatchesRegularExpression('/<a class="[^"]*" href="#main"/', $markup, 'the skip link class is escaped');
         self::assertMatchesRegularExpression('/<main id="main" class="[^"]*"/', $markup, 'the main class is escaped');
-        self::assertMatchesRegularExpression('/<h1 class="[^"]*">/', $markup, 'the h1 class is escaped');
     }
 
     public function testTheShellFiresHeadAndFooterExactlyOnce(): void

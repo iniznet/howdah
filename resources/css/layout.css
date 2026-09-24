@@ -32,13 +32,7 @@
 	.grid {
 		display: grid;
 		gap: var(--space-md);
-		grid-template-columns: repeat(var(--howdah-grid-columns, 2), minmax(0, 1fr));
-	}
-
-	@media (max-width: 48rem) {
-		.grid {
-			grid-template-columns: minmax(0, 1fr);
-		}
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
 	}
 
 	.container {
@@ -48,7 +42,7 @@
 	}
 
 	.container--reading {
-		max-inline-size: var(--wp--style--global--content-size, 40rem);
+		max-inline-size: calc(var(--wp--style--global--content-size, 40rem) + 2 * var(--space-gutter));
 	}
 
 	.container--wide {
@@ -57,5 +51,19 @@
 
 	.section {
 		padding-block: var(--space-lg);
+	}
+
+	/* The page frame: header and footer run full width, content stays centred. */
+	.main {
+		padding-block: var(--space-lg) calc(var(--space-lg) * 2);
+		min-block-size: 60vh;
+	}
+
+	.site-header {
+		border-block-end: 1px solid color-mix(in oklch, var(--ink), transparent 88%);
+	}
+
+	.site-footer {
+		border-block-start: 1px solid color-mix(in oklch, var(--ink), transparent 88%);
 	}
 }

@@ -106,7 +106,7 @@ final class SurfaceCeilingTest extends \WP_UnitTestCase
 
     public function testANotFoundRendersNoQueriesOfItsOwn(): void
     {
-        $surface = new NotFound(self::ctx(QueryKind::NotFound), $this->classes);
+        $surface = new NotFound($this->classes);
 
         $observed = CeilingProbe::within(static fn (): string => $surface->render(), NotFound::QUERY_CEILING, 'NotFound cold');
         self::assertLessThanOrEqual(NotFound::QUERY_CEILING, $observed);

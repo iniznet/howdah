@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Mahout\Content\PostData;
 use Iniznet\Mahout\Render\Component;
@@ -22,6 +23,8 @@ use Iniznet\Mahout\Ui\ClassResolver;
 use Iniznet\Mahout\Ui\Components\Post\Pagination;
 use Iniznet\Mahout\Ui\Components\Post\PostBody;
 use Iniznet\Mahout\Ui\Components\Post\PostMeta;
+use Iniznet\Mahout\Ui\Components\Typography\Heading;
+use Iniznet\Mahout\Ui\Components\Typography\HeadingLevel;
 
 final readonly class SinglePost implements Component
 {
@@ -32,6 +35,7 @@ final readonly class SinglePost implements Component
         private QueryContext $ctx,
         private ContentRepository $content,
         private ClassResolver $classes,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -46,10 +50,15 @@ final readonly class SinglePost implements Component
         return new Document(
             $this->classes,
             main: new Stack([
-                new PostMeta($this->classes, $post),
+                new Stack([
+                    new Heading($this->classes, HeadingLevel::One, $post->title),
+                    new PostMeta($this->classes, $post),
+                ]),
                 new PostBody($this->classes, $post->content),
                 $this->postPages($post),
             ]),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
         )->render();
     }
 

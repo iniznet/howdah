@@ -2,6 +2,10 @@
  * The theme's design tokens, mirrored from theme.json so the stylesheet and
  * the block editor agree. Only preset values are mirrored; feature tokens are
  * declared beside the component that owns them.
+ *
+ * The palette slugs come from theme.json through core's own custom-property
+ * output; the semantic ink/paper pair re-points them per colour scheme so a
+ * component never picks a raw colour.
  */
 
 :root {
@@ -9,6 +13,17 @@
 	--space-sm: 0.5rem;
 	--space-md: 1rem;
 	--space-lg: clamp(1.5rem, 1rem + 2vw, 3rem);
+
+	--radius-sm: 0.25rem;
+	--radius-md: 0.375rem;
+	--radius-lg: 0.75rem;
+
+	/* Semantic ink and paper: the declared palette, re-pointed per scheme. */
+	--ink: light-dark(var(--wp--preset--color--base, #16181d), #e8eaef);
+	--paper: light-dark(var(--wp--preset--color--surface, #fdfdfc), #101216);
+	--accent: light-dark(var(--wp--preset--color--accent, #315a7d), #8ab4d8);
+
+	--ring: 0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
 
 	color-scheme: light dark;
 }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Surfaces\Arms;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Ui\ClassResolver;
@@ -24,6 +25,7 @@ final readonly class GenericList implements Component
 
     public function __construct(
         private ClassResolver $classes,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -35,6 +37,8 @@ final readonly class GenericList implements Component
                 $this->classes,
                 heading: \__('Nothing has been published here yet.', 'howdah'),
             ),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
         )->render();
     }
 }

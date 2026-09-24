@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Surfaces;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Howdah\Exception\InvalidHookResult;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Howdah\Features\Content\Surfaces\BlogIndex;
@@ -65,13 +66,14 @@ final class Surfaces
         $classes = $services->get(ClassResolver::class);
         $content = $services->get(ContentRepository::class);
         $builder = new SurfacePlanBuilder($context, $services->get(FragmentCache::class));
+        $chrome = SiteChrome::forContext($classes, $context->site);
 
         $plan = match (true) {
             QueryKind::Embed === $context->kind => $builder
                 ->surface(static fn (): Component => new EmbedContent($context, $content, $classes))
                 ->uncacheable('embed document, rendered for one parent request'),
             QueryKind::Front === $context->kind && null !== $context->objectId => $builder
-                ->surface(static fn (): Component => new SinglePage($context, $content, $classes))
+                ->surface(static fn (): Component => new SinglePage($context, $content, $classes, $chrome))
                 ->shared(FragmentKey::fromParts(
                     SinglePage::class,
                     $context->objectId,
@@ -79,15 +81,15 @@ final class Surfaces
                     $context->site->locale,
                 )),
             QueryKind::Front === $context->kind => $builder
-                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes))
+                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes, $chrome))
                 ->guardOverflow('page beyond the content graph, out of range')
                 ->shared(self::indexKey($context)),
             QueryKind::Home === $context->kind => $builder
-                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes))
+                ->surface(static fn (): Component => new BlogIndex($context, $content, $classes, $chrome))
                 ->guardOverflow('page beyond the content graph, out of range')
                 ->shared(self::indexKey($context)),
             QueryKind::Singular === $context->kind && 'post' === $context->postType => $builder
-                ->surface(static fn (): Component => new SinglePost($context, $content, $classes))
+                ->surface(static fn (): Component => new SinglePost($context, $content, $classes, $chrome))
                 ->shared(FragmentKey::fromParts(
                     SinglePost::class,
                     $context->objectId ?? 0,
@@ -95,7 +97,7 @@ final class Surfaces
                     $context->site->locale,
                 )),
             QueryKind::Singular === $context->kind && 'page' === $context->postType => $builder
-                ->surface(static fn (): Component => new SinglePage($context, $content, $classes))
+                ->surface(static fn (): Component => new SinglePage($context, $content, $classes, $chrome))
                 ->shared(FragmentKey::fromParts(
                     SinglePage::class,
                     $context->objectId ?? 0,
@@ -103,14 +105,14 @@ final class Surfaces
                     $context->site->locale,
                 )),
             QueryKind::Archive === $context->kind => $builder
-                ->surface(static fn (): Component => new ContentArchive($context, $content, $classes))
+                ->surface(static fn (): Component => new ContentArchive($context, $content, $classes, $chrome))
                 ->guardOverflow('page beyond the content graph, out of range')
                 ->shared(self::archiveKey($context)),
             QueryKind::Search === $context->kind => $builder
-                ->surface(static fn (): Component => new SearchResults($context, $classes, $content))
+                ->surface(static fn (): Component => new SearchResults($context, $classes, $content, $chrome))
                 ->uncacheable('free-text term, unbounded key space'),
             QueryKind::NotFound === $context->kind => $builder
-                ->surface(static fn (): Component => new NotFound($context, $classes))
+                ->surface(static fn (): Component => new NotFound($classes, $chrome))
                 ->uncacheable('a 404 is a statement about the current content graph'),
             default => $builder
                 ->surface(static fn (): Component => new GenericList($classes))

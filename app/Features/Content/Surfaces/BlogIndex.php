@@ -11,15 +11,19 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Render\QueryContext;
 use Iniznet\Mahout\Render\Stack;
 use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Layout\Grid;
 use Iniznet\Mahout\Ui\Components\Message\Message;
 use Iniznet\Mahout\Ui\Components\Post\Pagination;
 use Iniznet\Mahout\Ui\Components\Post\PostCard;
+use Iniznet\Mahout\Ui\Components\Typography\Heading;
+use Iniznet\Mahout\Ui\Components\Typography\HeadingLevel;
 
 final readonly class BlogIndex implements Component
 {
@@ -30,6 +34,7 @@ final readonly class BlogIndex implements Component
         private QueryContext $ctx,
         private ContentRepository $content,
         private ClassResolver $classes,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -41,19 +46,31 @@ final readonly class BlogIndex implements Component
         if ([] === $list->items) {
             return new Document(
                 $this->classes,
-                main: new Message($this->classes, heading: \__('Nothing has been published here yet.', 'howdah')),
+                main: new Stack([
+                    new Heading($this->classes, HeadingLevel::One, \__('Latest posts', 'howdah')),
+                    new Message($this->classes, heading: \__('Nothing has been published here yet.', 'howdah')),
+                ]),
+                header: $this->chrome?->header(),
+                footer: $this->chrome?->footer(),
             )->render();
         }
 
-        $items = [];
+        $cards = [];
 
         foreach ($list->items as $post) {
-            $items[] = new PostCard($this->classes, $post);
+            $cards[] = new PostCard($this->classes, $post)->render();
         }
 
-        $items[] = $this->pagination($list->hasMore, $page);
-
-        return new Document($this->classes, main: new Stack($items))->render();
+        return new Document(
+            $this->classes,
+            main: new Stack([
+                new Heading($this->classes, HeadingLevel::One, \__('Latest posts', 'howdah')),
+                new Grid($this->classes, $cards),
+                $this->pagination($list->hasMore, $page),
+            ]),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
+        )->render();
     }
 
     private function pagination(bool $hasMore, int $page): Pagination

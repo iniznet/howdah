@@ -10,10 +10,12 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Surfaces\Arms;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\Document;
-use Iniznet\Mahout\Render\QueryContext;
+use Iniznet\Mahout\Render\Stack;
 use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Actions\Link;
 use Iniznet\Mahout\Ui\Components\Message\Message;
 
 final readonly class NotFound implements Component
@@ -22,8 +24,8 @@ final readonly class NotFound implements Component
     public const int QUERY_CEILING = 6;
 
     public function __construct(
-        private QueryContext $ctx,
         private ClassResolver $classes,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -31,11 +33,16 @@ final readonly class NotFound implements Component
     {
         return new Document(
             $this->classes,
-            main: new Message(
-                $this->classes,
-                heading: \__('Nothing was found at this address.', 'howdah'),
-                detail: $this->ctx->site->name,
-            ),
+            main: new Stack([
+                new Message(
+                    $this->classes,
+                    heading: \__('Nothing was found at this address.', 'howdah'),
+                    detail: \__('The page may have moved, or the address is wrong.', 'howdah'),
+                ),
+                new Link($this->classes, (string) \home_url('/'), \__('Back to the front page', 'howdah')),
+            ]),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
         )->render();
     }
 }

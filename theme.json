@@ -29,7 +29,11 @@
 		},
 		"custom": {
 			"mahout": {
-				"contrastPairings": []
+				"contrastPairings": [
+					{ "foreground": "base", "background": "surface" },
+					{ "foreground": "surface", "background": "accent" },
+					{ "foreground": "accent", "background": "surface" }
+				]
 			}
 		}
 	}

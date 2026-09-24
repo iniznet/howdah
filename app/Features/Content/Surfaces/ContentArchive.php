@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content\Surfaces;
 
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Mahout\Content\PostList;
 use Iniznet\Mahout\Render\Component;
@@ -18,6 +19,7 @@ use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Render\QueryContext;
 use Iniznet\Mahout\Render\Stack;
 use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Layout\Grid;
 use Iniznet\Mahout\Ui\Components\Message\Message;
 use Iniznet\Mahout\Ui\Components\Post\ArchiveHeading;
 use Iniznet\Mahout\Ui\Components\Post\Pagination;
@@ -32,6 +34,7 @@ final readonly class ContentArchive implements Component
         private QueryContext $ctx,
         private ContentRepository $content,
         private ClassResolver $classes,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -45,14 +48,23 @@ final readonly class ContentArchive implements Component
         if ([] === $list->items) {
             $items[] = new Message($this->classes, heading: \__('Nothing has been published here yet.', 'howdah'));
         } else {
+            $cards = [];
+
             foreach ($list->items as $post) {
-                $items[] = new PostCard($this->classes, $post);
+                $cards[] = new PostCard($this->classes, $post)->render();
             }
+
+            $items[] = new Grid($this->classes, $cards);
         }
 
         $items[] = $this->pagination($list->hasMore, $page);
 
-        return new Document($this->classes, main: new Stack($items))->render();
+        return new Document(
+            $this->classes,
+            main: new Stack($items),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
+        )->render();
     }
 
     private function list(int $page): PostList

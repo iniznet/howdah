@@ -40,5 +40,9 @@ final class ThemeProvider implements ServiceProvider
         \add_theme_support('automatic-feed-links');
         \add_theme_support('align-wide');
         \add_theme_support('html5', ['search-form', 'gallery', 'caption', 'style', 'script']);
+
+        \register_nav_menus([
+            'howdah-primary' => \__('Primary menu', 'howdah'),
+        ]);
     }
 }

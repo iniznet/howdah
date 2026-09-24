@@ -15,6 +15,8 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Surfaces\Arms;
 
+use Iniznet\Howdah\Components\SearchForm;
+use Iniznet\Howdah\Components\SiteChrome;
 use Iniznet\Howdah\Features\Content\ContentRepository;
 use Iniznet\Mahout\Db\Search\SearchTerms;
 use Iniznet\Mahout\Render\Component;
@@ -22,6 +24,7 @@ use Iniznet\Mahout\Render\Document;
 use Iniznet\Mahout\Render\QueryContext;
 use Iniznet\Mahout\Render\Stack;
 use Iniznet\Mahout\Ui\ClassResolver;
+use Iniznet\Mahout\Ui\Components\Layout\Grid;
 use Iniznet\Mahout\Ui\Components\Message\Message;
 use Iniznet\Mahout\Ui\Components\Post\ArchiveHeading;
 use Iniznet\Mahout\Ui\Components\Post\Pagination;
@@ -36,6 +39,7 @@ final readonly class SearchResults implements Component
         private QueryContext $ctx,
         private ClassResolver $classes,
         private ContentRepository $content,
+        private readonly ?SiteChrome $chrome = null,
     ) {
     }
 
@@ -62,26 +66,40 @@ final readonly class SearchResults implements Component
         if ([] === $list->items) {
             return new Document(
                 $this->classes,
-                main: new Message(
-                    $this->classes,
-                    heading: \__('Nothing matched this search.', 'howdah'),
-                    detail: $terms->raw,
-                ),
+                main: new Stack([
+                    new Message(
+                        $this->classes,
+                        heading: \__('Nothing matched this search.', 'howdah'),
+                        detail: $terms->raw,
+                    ),
+                    $this->form(),
+                ]),
+                header: $this->chrome?->header(),
+                footer: $this->chrome?->footer(),
             )->render();
         }
 
-        $items = [new ArchiveHeading(
-            $this->classes,
-            \sprintf(\__('Search results for: %s', 'howdah'), $terms->raw),
-        )];
+        $cards = [];
 
         foreach ($list->items as $post) {
-            $items[] = new PostCard($this->classes, $post);
+            $cards[] = new PostCard($this->classes, $post)->render();
         }
 
-        $items[] = $this->pagination($list->hasMore, $this->ctx->listingPage());
+        $items = [
+            new ArchiveHeading(
+                $this->classes,
+                \sprintf(\__('Search results for: %s', 'howdah'), $terms->raw),
+            ),
+            new Grid($this->classes, $cards),
+            $this->pagination($list->hasMore, $this->ctx->listingPage()),
+        ];
 
-        return new Document($this->classes, main: new Stack($items))->render();
+        return new Document(
+            $this->classes,
+            main: new Stack($items),
+            header: $this->chrome?->header(),
+            footer: $this->chrome?->footer(),
+        )->render();
     }
 
     /** The raw term, from the query vars — never from a superglobal. */
@@ -98,5 +116,15 @@ final readonly class SearchResults implements Component
         $older = $hasMore ? \get_pagenum_link($page + 1) : null;
 
         return new Pagination($this->classes, $newer, $older);
+    }
+
+    /** The search form re-runs the search from the results page. */
+    private function form(): SearchForm
+    {
+        return new SearchForm(
+            $this->classes,
+            (string) \home_url('/'),
+            $this->term(),
+        );
     }
 }

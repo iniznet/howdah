@@ -24,6 +24,14 @@ msgstr ""
 msgid "Schema version (stored)"
 msgstr ""
 
+#: app/Components/markup/search-form.php:12
+msgid "Search"
+msgstr ""
+
+#: app/Components/markup/search-form.php:9
+msgid "Search this site"
+msgstr ""
+
 #: app/Admin/markup/status.php:8
 msgid "Site status"
 msgstr ""

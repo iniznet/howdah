@@ -7,10 +7,12 @@
 	.heading {
 		line-height: 1.2;
 		text-wrap: balance;
+		margin-block: 0;
 	}
 
 	.heading--1 {
 		font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem);
+		letter-spacing: -0.02em;
 	}
 
 	.heading--2 {
@@ -27,8 +29,74 @@
 		font-size: 1.125rem;
 	}
 
+	.document-title,
+	.archive-heading {
+		margin-block: 0 var(--space-md);
+	}
+
 	.prose > * + * {
 		margin-block-start: 1em;
+	}
+
+	/* The article body: one scale for everything the editor can emit. */
+	.post-body {
+		font-size: 1.0625rem;
+	}
+
+	.post-body > * + * {
+		margin-block-start: 1.25em;
+	}
+
+	.post-body h2 {
+		font-size: clamp(1.375rem, 1.2rem + 0.75vw, 1.625rem);
+		line-height: 1.25;
+		margin-block-start: 2em;
+		text-wrap: balance;
+	}
+
+	.post-body h3 {
+		font-size: 1.25rem;
+		line-height: 1.3;
+		margin-block-start: 1.75em;
+	}
+
+	.post-body h4,
+	.post-body h5,
+	.post-body h6 {
+		font-size: 1.0625rem;
+		margin-block-start: 1.5em;
+	}
+
+	.post-body a {
+		color: var(--accent);
+	}
+
+	.post-body blockquote {
+		margin: 0;
+		padding-inline-start: var(--space-md);
+		border-inline-start: 3px solid var(--accent);
+	}
+
+	.post-body img {
+		max-inline-size: 100%;
+		block-size: auto;
+		border-radius: var(--radius-md);
+	}
+
+	.post-body pre {
+		padding: var(--space-md);
+		border-radius: var(--radius-md);
+		background: color-mix(in oklch, var(--ink), transparent 94%);
+		overflow-inline: auto;
+	}
+
+	.post-body code {
+		font-family: ui-monospace, monospace;
+		font-size: 0.9375em;
+	}
+
+	.post-body figure {
+		margin: 0;
 	}
 
 	.label {
