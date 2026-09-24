@@ -29,6 +29,29 @@ There is no setup step, no activation hook and no required plugin. Options the
 theme registers are non-autoloaded; the theme creates no database tables of its
 own.
 
+## The packages
+
+The theme is the composition root of seven packages. Each is one repository,
+consumed over Composer, documented in its own \`docs/\`:
+
+| Package | Owns | You touch it when |
+|---|---|---|
+| `mahout-kernel` | the container, providers, environment, diagnostics | you add a provider or a bound service |
+| `mahout-assets` | the Vite manifest bridge and asset emission | you add a script or style entry |
+| `mahout-db` | the schema gateway, migrations, the indexed search swap | you add a table or touch a query boundary |
+| `mahout-content` | the hardened query mechanics (`PostReader`, `QuerySpec`) | you change how content is fetched |
+| `mahout-fields` | field declaration, storage, the admin UI and its default styling | you declare or read a field |
+| `mahout-render` | the render pipeline, surfaces, fragments, the error boundary | you change how a request becomes HTML |
+| `mahout-ui` | the shared component library and the class resolver | you need a component that predates the theme's own |
+
+## Documentation
+
+| First contact (30 minutes) | Working here (2 hours) |
+|---|---|
+| this README → [docs/tutorial.md](./docs/tutorial.md) — one feature, end to end | [AGENTS.md](./AGENTS.md) — the complete contract |
+| | [docs/architecture.md](./docs/architecture.md) → [docs/extending.md](./docs/extending.md) |
+| | [docs/reference/](./docs/reference/) — the generated surface and hook inventories |
+
 ## Development
 
 ```bash

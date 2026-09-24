@@ -1,5 +1,11 @@
 # Getting started
 
+**Read this page in this order:** this page (prerequisites, commands, the
+reference regeneration you will trigger) → [tutorial.md](./tutorial.md) for a
+worked feature → [AGENTS.md](../AGENTS.md), the complete contract →
+[architecture.md](./architecture.md) and [extending.md](./extending.md). The
+tutorial is the fast lane; AGENTS.md is the one every commit is held to.
+
 ## Prerequisites
 
 - PHP 8.4+ with the usual WordPress stack
