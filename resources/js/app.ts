@@ -1,8 +1,7 @@
 /**
- * The front-end entry point. Features mount from resources/js/features and
- * are registered in config/entries.php; the build manifest maps this source
- * and the Script Modules API ships it.
+ * The front-end entry point. The theme ships no stylesheet; this entry
+ * exists so the manifest and the Script Modules API stay exercised by the
+ * build. Features mount from resources/js/features and are registered in
+ * config/entries.php.
  */
-import '../css/app.css';
-
-document.documentElement.classList.add('js');
+export {};
