@@ -33,9 +33,10 @@ app/Features/Series/
 ## Declaring an option screen
 
 `config/display-options.php` declares whole settings pages. The shipped Display
-screen is the worked example: two tabs, the footer note's fields inside the
-first tab's field section, and the guide — a markup file under
-`app/Admin/markup/` the section names — inside the second. A screen whose
+screen is the worked example: its own top-level menu, the sidebar layout, two
+tabs — the footer note's fields inside the first tab's field section, and the
+guide, a markup file under `app/Admin/markup/` the section names, inside the
+second. A screen whose
 tabs carry no field group renders no form: documentation, information and
 guides are screens like any other, and the field package's
 `Admin\OptionScreenManager` derives the page, its tabs, its save entry and

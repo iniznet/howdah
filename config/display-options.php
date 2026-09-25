@@ -14,6 +14,9 @@
  * feature ships. The shipped example shows both, on the two tabs of one
  * page: the footer note's fields, and the guide that documents them.
  *
+ * The screen registers its own top-level menu, not a Settings submenu, and
+ * reads as a document: the sidebar layout. Both are the declaration's facts.
+ *
  * A value is read through the field layer's reader with ObjectRef::option();
  * the package's MetaStorage stores it in wp_options under its own
  * "mahout_fields/<field id>" key. A field declares no default: absence reads
@@ -33,6 +36,7 @@ declare(strict_types=1);
 use Iniznet\Mahout\Fields\FieldGroup;
 use Iniznet\Mahout\Fields\ObjectContext;
 use Iniznet\Mahout\Fields\OptionScreen;
+use Iniznet\Mahout\Fields\OptionScreenLayout;
 use Iniznet\Mahout\Fields\OptionSection;
 use Iniznet\Mahout\Fields\OptionTab;
 use Iniznet\Mahout\Fields\StorageTarget;
@@ -49,7 +53,11 @@ return [
         menuTitle: 'Display',
         group: null,
         capability: 'manage_options',
+        menuParent: '',
         description: 'How the site takes its display options, and where each one renders.',
+        layout: OptionScreenLayout::Sidebar,
+        topLevel: true,
+        menuIcon: 'dashicons-layout',
         tabs: [
             new OptionTab('Options', [
                 OptionSection::fields('Footer note', $displayGroup),

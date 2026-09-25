@@ -6,6 +6,7 @@ namespace Iniznet\Howdah\Tests\Integration;
 
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Mahout\Fields\Admin\FieldsUiProvider;
+use Iniznet\Mahout\Fields\OptionScreenLayout;
 use Iniznet\Mahout\Fields\Contracts\OptionScreens as OptionScreensContract;
 use Iniznet\Mahout\Fields\Hooks as FieldHooks;
 
@@ -31,6 +32,8 @@ final class OptionScreensTest extends \WP_UnitTestCase
     {
         $screen = iterator_to_array(Bootstrap::services()->get(OptionScreensContract::class))[0];
 
+        self::assertTrue($screen->topLevel, 'the worked example registers its own menu, not a Settings submenu');
+        self::assertSame(OptionScreenLayout::Sidebar, $screen->layout, 'the worked example reads as a document: the sidebar layout');
         self::assertCount(2, $screen->tabs, 'the worked example shows both section kinds, on the two tabs of one page');
         self::assertSame(['Options', 'Guide'], array_map(static fn ($tab) => $tab->label, $screen->tabs));
         self::assertSame(['display_options'], array_map(static fn ($group) => $group->id, $screen->fieldGroups()), 'the fields live inside a tab\'s section');
