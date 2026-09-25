@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah\Features\Content;
 
+use Iniznet\Howdah\Exception\UnusablePostTimestamp;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Mahout\Content\PostData;
 use Iniznet\Mahout\Content\PostTerm;
@@ -26,14 +27,16 @@ final readonly class PostMapper
         $page = \min(\max(1, $page), $pageCount);
         $authorId = (int) $post->post_author;
 
+        $stamp = $this->stamp($post);
+
         return new PostData(
             id: (int) $post->ID,
             title: (string) \get_the_title($post),
             content: $this->body((string) $splits[$page - 1]),
             excerpt: (string) \get_the_excerpt($post),
             permalink: (string) \get_permalink($post),
-            publishedAt: $this->publishedAt($post),
-            dateDisplay: $this->dateDisplay($post),
+            publishedAt: $this->publishedAt($stamp),
+            dateDisplay: $this->dateDisplay($stamp),
             authorName: $this->authorName($authorId),
             authorUrl: (string) \get_author_posts_url($authorId),
             thumbnail: $this->thumbnail($post),
@@ -48,6 +51,7 @@ final readonly class PostMapper
     public function teaser(\WP_Post $post): PostData
     {
         $authorId = (int) $post->post_author;
+        $stamp = $this->stamp($post);
 
         return new PostData(
             id: (int) $post->ID,
@@ -55,8 +59,8 @@ final readonly class PostMapper
             content: '',
             excerpt: (string) \get_the_excerpt($post),
             permalink: (string) \get_permalink($post),
-            publishedAt: $this->publishedAt($post),
-            dateDisplay: $this->dateDisplay($post),
+            publishedAt: $this->publishedAt($stamp),
+            dateDisplay: $this->dateDisplay($stamp),
             authorName: $this->authorName($authorId),
             authorUrl: (string) \get_author_posts_url($authorId),
             thumbnail: '',
@@ -86,29 +90,33 @@ final readonly class PostMapper
         return $filtered;
     }
 
-    private function publishedAt(\WP_Post $post): \DateTimeImmutable
+    private function publishedAt(int $stamp): \DateTimeImmutable
     {
-        $stamp = \get_post_timestamp($post);
-
-        if (\is_int($stamp)) {
-            return new \DateTimeImmutable()->setTimestamp($stamp);
-        }
-
-        return new \DateTimeImmutable('@0');
+        return new \DateTimeImmutable()->setTimestamp($stamp);
     }
 
-    private function dateDisplay(\WP_Post $post): string
+    private function dateDisplay(int $stamp): string
     {
-        $stamp = \get_post_timestamp($post);
-
-        if (!\is_int($stamp)) {
-            return '';
-        }
-
         $option = \get_option('date_format', 'F j, Y');
         $format = \is_string($option) && '' !== $option ? $option : 'F j, Y';
 
         return (string) \wp_date($format, $stamp);
+    }
+
+    /**
+     * A post whose date core cannot resolve to a timestamp is a broken
+     * invariant: the mapper refuses, it never substitutes an epoch or an
+     * empty display.
+     */
+    private function stamp(\WP_Post $post): int
+    {
+        $stamp = \get_post_timestamp($post);
+
+        if (!\is_int($stamp)) {
+            throw UnusablePostTimestamp::forPost((int) $post->ID);
+        }
+
+        return $stamp;
     }
 
     /**

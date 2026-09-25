@@ -40,4 +40,9 @@ final class InvalidHookResult extends \UnexpectedValueException implements Theme
     {
         return new self('The migrations filter must deliver Migration instances only.');
     }
+
+    public static function notRenderedHtml(): self
+    {
+        return new self('The howdah/surface/rendered filter must return the rendered HTML string.');
+    }
 }

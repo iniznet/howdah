@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Iniznet\Howdah;
 
+use Iniznet\Howdah\Exception\InvalidHookResult;
 use Iniznet\Howdah\Exception\NotBooted;
 use Iniznet\Howdah\Features\Series\SeriesModule;
 use Iniznet\Howdah\Providers\AdminProvider;
@@ -112,7 +113,11 @@ final class Bootstrap
 
         $filtered = apply_filters(Hooks::SURFACE_RENDERED, $html, $plan->surface, $ctx);
 
-        return \is_string($filtered) ? $filtered : $html;
+        if (!\is_string($filtered)) {
+            throw InvalidHookResult::notRenderedHtml();
+        }
+
+        return $filtered;
     }
 
     private static function kernel(): Kernel
