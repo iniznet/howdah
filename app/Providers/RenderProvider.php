@@ -82,7 +82,10 @@ final class RenderProvider implements ServiceProvider
 
         self::recordReduction($container, $plan->cacheability, $policy->effective);
 
-        $conditional = new ConditionalGet($policy, $plan->key, $request->ifNoneMatch);
+        // The validator digests the key and the group's invalidation salt: an
+        // invalidation rotates the validator, so a conditional client holding
+        // an old ETag is answered in full, never with a lying 304.
+        $conditional = new ConditionalGet($policy, $plan->key, $request->ifNoneMatch, $container->get(FragmentCache::class)->salt());
 
         if ($conditional->answerNotModified()) {
             exit;

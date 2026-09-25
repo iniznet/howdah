@@ -57,7 +57,7 @@ final class FragmentCacheTest extends \WP_UnitTestCase
 
         // A foreign token holds the lock: wp_cache_add refuses, so this
         // render is a loser by construction.
-        wp_cache_set($key->toString().'|lock', 'foreign-token', 'howdah/fragments', 5);
+        wp_cache_set($key->toString().'|lock', 'foreign-token', FragmentCache::GROUP, 5);
 
         self::assertSame('loser', $fragment->render(), 'the loser still renders a complete page.');
         self::assertNull($this->cache->get($key->toString()), 'the loser never writes the entry.');
@@ -71,7 +71,7 @@ final class FragmentCacheTest extends \WP_UnitTestCase
 
         $fragment->render();
 
-        self::assertFalse(wp_cache_get($key->toString().'|lock', 'howdah/fragments'), 'the winner deleted the lock.');
+        self::assertFalse(wp_cache_get($key->toString().'|lock', FragmentCache::GROUP), 'the winner deleted the lock.');
     }
 
     public function testTheStoreReportsAMissAsNull(): void
