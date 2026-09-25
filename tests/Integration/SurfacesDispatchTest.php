@@ -191,17 +191,18 @@ final class SurfacesDispatchTest extends \WP_UnitTestCase
             }
         };
 
-        add_filter('howdah/surface/resolve', static fn (SurfacePlan $plan): SurfacePlan => new SurfacePlan(
+        // The replacement declares itself through the one terminal that
+        // names its shape: never cached, with the reason stated.
+        add_filter('howdah/surface/resolve', static fn (SurfacePlan $plan): SurfacePlan => SurfacePlan::uncacheable(
             $replacement,
-            Cacheability::Private,
-            \Iniznet\Mahout\Render\FragmentScope::Never,
             'a child theme replaced the Surface through the documented seam',
         ));
 
         $plan = Surfaces::resolve(self::ctx(QueryKind::NotFound), Bootstrap::services());
 
         self::assertSame('replaced', $plan->surface->render(), 'a Surface is replaced through howdah/surface/resolve, typed and greppable.');
-        self::assertSame(Cacheability::Private, $plan->cacheability, 'the replacement keeps a declaration.');
+        self::assertSame(Cacheability::Uncacheable, $plan->cacheability, 'the replacement keeps a declaration.');
+        self::assertNotSame('', $plan->reason, 'the replacement states why it is never cached.');
     }
 
     /** @return list<string> */

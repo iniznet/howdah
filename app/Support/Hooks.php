@@ -91,19 +91,6 @@ final class Hooks
     public const string SURFACE_RENDERED = 'howdah/surface/rendered';
 
     /**
-     * Fires when a Surface threw and the error boundary recorded it. The
-     * payload names the condition and carries the support reference; it
-     * never carries a substitute page.
-     *
-     * @since 1.0
-     *
-     * @action
-     *
-     * @param \Throwable $e         the failure
-     * @param string     $reference the support reference Diagnostics returned
-     */
-
-    /**
      * The cache purge seam. The theme owns the seam and emits this action
      * when a content change invalidates a fragment; the client owns the
      * endpoint that listens for it. No vendor purge API is ever called.

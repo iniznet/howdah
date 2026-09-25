@@ -17,8 +17,9 @@ use Iniznet\Mahout\Ui\ClassResolver;
 /**
  * The error boundary's contract: a Surface returns the page or throws.
  * Production renders the defined Error Surface with status 500; development
- * rethrows. The failure is recorded at critical and howdah/surface/failed
- * fires with the support reference. No white screen, no substitute data.
+ * rethrows. The failure is recorded at critical and the render library's
+ * surface-failed hook fires with the support reference. No white screen, no
+ * substitute data.
  */
 final class SurfaceErrorBoundaryTest extends \WP_UnitTestCase
 {
