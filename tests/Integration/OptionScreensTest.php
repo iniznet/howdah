@@ -6,9 +6,9 @@ namespace Iniznet\Howdah\Tests\Integration;
 
 use Iniznet\Howdah\Bootstrap;
 use Iniznet\Mahout\Fields\Admin\FieldsUiProvider;
-use Iniznet\Mahout\Fields\OptionScreenLayout;
 use Iniznet\Mahout\Fields\Contracts\OptionScreens as OptionScreensContract;
 use Iniznet\Mahout\Fields\Hooks as FieldHooks;
+use Iniznet\Mahout\Fields\OptionScreenLayout;
 
 /**
  * The option screens' composition: the starter theme is opinionless, the
