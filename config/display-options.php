@@ -60,7 +60,7 @@ return [
         menuIcon: 'dashicons-layout',
         tabs: [
             new OptionTab('Options', [
-                OptionSection::fields('Footer note', $displayGroup),
+                OptionSection::fields('', $displayGroup),
             ]),
             new OptionTab('Guide', [
                 OptionSection::content('How display options work', __DIR__.'/../app/Admin/markup/display-guide.php'),

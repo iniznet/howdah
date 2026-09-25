@@ -91,13 +91,20 @@ final class EditorProvider implements ServiceProvider
         // the field package's default resolution is the fallback for. The
         // package lives in this theme's vendor directory; a dev checkout's
         // path repository links it, and a link is not a URL.
-        $stylesheet = \wp_normalize_path(dirname(__DIR__, 2).'/vendor/iniznet/mahout-fields/resources/fields.css');
+        $resources = \wp_normalize_path(dirname(__DIR__, 2).'/vendor/iniznet/mahout-fields/resources/');
         $content = \wp_normalize_path(WP_CONTENT_DIR.'/');
 
+        $assetUrl = static function (string $file) use ($resources, $content): ?string {
+            $path = $resources.$file;
+
+            return \is_file($path) && \str_starts_with($path, $content)
+                ? \content_url(\substr($path, strlen($content)))
+                : null;
+        };
+
         $container->set(new FieldStyles(
-            url: \is_file($stylesheet) && \str_starts_with($stylesheet, $content)
-                ? \content_url(\substr($stylesheet, strlen($content)))
-                : null,
+            url: $assetUrl('fields.css'),
+            scriptUrl: $assetUrl('fields.js'),
             panels: $collection,
             screens: new OptionScreens($screens),
         ));
