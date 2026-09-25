@@ -19,6 +19,8 @@ Regenerate with MAHOUT_SURFACES_REGENERATE=1 vendor/bin/phpunit --filter Surface
 | `QueryKind::Home === $context->kind (out of range)` | `BlogIndex` | `Uncacheable` | `Never` | `page beyond the content graph, out of range` |
 | `QueryKind::Singular === $context->kind && 'post' === $context->postType` | `SinglePost` | `Shared` | `Shared` | `` |
 | `QueryKind::Singular === $context->kind && 'page' === $context->postType` | `SinglePage` | `Shared` | `Shared` | `` |
+| `QueryKind::Archive === $context->kind && 'howdah_series' === $context->postType` | `SeriesArchive` | `Shared` | `Shared` | `` |
+| `QueryKind::Archive === $context->kind && 'howdah_series' === $context->postType (out of range)` | `SeriesArchive` | `Uncacheable` | `Never` | `page beyond the content graph, out of range` |
 | `QueryKind::Archive === $context->kind` | `ContentArchive` | `Shared` | `Shared` | `` |
 | `QueryKind::Archive === $context->kind (out of range)` | `ContentArchive` | `Uncacheable` | `Never` | `page beyond the content graph, out of range` |
 | `QueryKind::Search === $context->kind` | `SearchResults` | `Uncacheable` | `Never` | `free-text term, unbounded key space` |

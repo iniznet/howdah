@@ -18,9 +18,10 @@ minutes plus a test run.
 
 ## 1 — Declare the field
 
-Open `config/fields.php`. It is empty in the starter — an opinionless theme
-declares nothing — and every admin surface the field package renders derives
-from this list and from nothing else:
+Open `config/fields.php`. The starter ships one declaration — the Series
+worked example, `app/Features/Series/` — and every admin surface the field
+package renders derives from this list and from nothing else. The example
+below adds a second panel:
 
 ```php
 use Iniznet\Mahout\Fields\FieldGroup;

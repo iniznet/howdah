@@ -37,10 +37,13 @@ use Iniznet\Howdah\Features\Content\Surfaces\ContentArchive;
 use Iniznet\Howdah\Features\Content\Surfaces\EmbedContent;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePage;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePost;
+use Iniznet\Howdah\Features\Series\SeriesRepository;
+use Iniznet\Howdah\Features\Series\Surfaces\SeriesArchive;
 use Iniznet\Howdah\Support\Hooks;
 use Iniznet\Howdah\Surfaces\Arms\GenericList;
 use Iniznet\Howdah\Surfaces\Arms\NotFound;
 use Iniznet\Howdah\Surfaces\Arms\SearchResults;
+use Iniznet\Mahout\Fields\Contracts\FieldReader;
 use Iniznet\Mahout\Kernel\Container;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\FragmentCache;
@@ -66,7 +69,8 @@ final class Surfaces
         $classes = $services->get(ClassResolver::class);
         $content = $services->get(ContentRepository::class);
         $builder = new SurfacePlanBuilder($context, $services->get(FragmentCache::class));
-        $chrome = SiteChrome::forContext($classes, $context->site);
+        $chrome = SiteChrome::forContext($classes, $context->site, $services->get(FieldReader::class));
+        $series = $services->get(SeriesRepository::class);
 
         $plan = match (true) {
             QueryKind::Embed === $context->kind => $builder
@@ -104,6 +108,10 @@ final class Surfaces
                     $context->contentPage(),
                     $context->site->locale,
                 )),
+            QueryKind::Archive === $context->kind && 'howdah_series' === $context->postType => $builder
+                ->surface(static fn (): Component => new SeriesArchive($context, $series, $classes, $chrome))
+                ->guardOverflow('page beyond the content graph, out of range')
+                ->shared(self::seriesKey($context)),
             QueryKind::Archive === $context->kind => $builder
                 ->surface(static fn (): Component => new ContentArchive($context, $content, $classes, $chrome))
                 ->guardOverflow('page beyond the content graph, out of range')
@@ -126,6 +134,16 @@ final class Surfaces
         }
 
         return $resolved;
+    }
+
+    /** The series archive's fragment key: the page and the locale. */
+    private static function seriesKey(QueryContext $ctx): FragmentKey
+    {
+        return FragmentKey::fromParts(
+            SeriesArchive::class,
+            $ctx->listingPage(),
+            $ctx->site->locale,
+        );
     }
 
     /**

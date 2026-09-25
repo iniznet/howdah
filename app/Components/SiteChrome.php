@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Iniznet\Howdah\Components;
 
 use Iniznet\Howdah\Support\PrimaryNav;
+use Iniznet\Mahout\Fields\Contracts\FieldReader;
+use Iniznet\Mahout\Fields\ObjectRef;
 use Iniznet\Mahout\Render\Component;
 use Iniznet\Mahout\Render\SiteProfile;
 use Iniznet\Mahout\Ui\ClassResolver;
@@ -25,17 +27,25 @@ final readonly class SiteChrome
         private SiteProfile $site,
         private string $homeUrl,
         private string $navigation,
+        private readonly ?string $footerNote = null,
     ) {
     }
 
-    /** The composition-root named constructor: the chrome from the request's site facts. */
-    public static function forContext(ClassResolver $classes, SiteProfile $site): self
+    /**
+     * The composition-root named constructor: the chrome from the request's
+     * site facts, plus the display option the colophon renders. The reader
+     * arrives resolved; absence falls back to the site description.
+     */
+    public static function forContext(ClassResolver $classes, SiteProfile $site, FieldReader $fields): self
     {
+        $note = $fields->value('footer_note', ObjectRef::option());
+
         return new self(
             classes: $classes,
             site: $site,
             homeUrl: (string) \home_url('/'),
             navigation: PrimaryNav::primary(),
+            footerNote: (null === $note || '' === $note) ? null : (string) $note,
         );
     }
 
@@ -51,6 +61,6 @@ final readonly class SiteChrome
 
     public function footer(): Component
     {
-        return new SiteFooter($this->classes, $this->site->description);
+        return new SiteFooter($this->classes, $this->footerNote ?? $this->site->description);
     }
 }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Iniznet\Howdah;
 
 use Iniznet\Howdah\Exception\NotBooted;
+use Iniznet\Howdah\Features\Series\SeriesModule;
 use Iniznet\Howdah\Providers\AdminProvider;
 use Iniznet\Howdah\Providers\AssetsProvider;
 use Iniznet\Howdah\Providers\CliProvider;
@@ -62,6 +63,11 @@ final class Bootstrap
         $kernel->provider(FieldsUiProvider::class);
         $kernel->provider(ContentPackageProvider::class);
         $kernel->provider(ContentProvider::class);
+        // The worked example feature: its content model is declared in
+        // config/content-types.php and registered by ContentProvider's init
+        // hook; the module declares the repository after the providers it
+        // resolves are registered.
+        $kernel->module(SeriesModule::class);
         $kernel->provider(EditorProvider::class);
         $kernel->provider(AdminProvider::class);
         $kernel->provider(CliProvider::class);

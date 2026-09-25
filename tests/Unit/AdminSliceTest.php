@@ -68,12 +68,14 @@ final class AdminSliceTest extends TestCase
         self::assertSame([], PanelRequest::fromArray(['mahout_fields_hash' => 7])->hashes());
     }
 
-    public function testTheStarterConfigIsTheDeclaredEmptyState(): void
+    public function testTheDeclaredConfigIsAWorkedExamplePanel(): void
     {
         $panels = require dirname(__DIR__, 2).'/config/fields.php';
 
         self::assertIsArray($panels);
-        self::assertSame([], $panels);
+        self::assertCount(1, $panels, 'the worked example declares one field panel.');
+        self::assertInstanceOf(FieldPanel::class, $panels[0]);
+        self::assertSame('howdah_series', $panels[0]->postType);
     }
 
     public function testAJunkConfigEntryIsLoud(): void

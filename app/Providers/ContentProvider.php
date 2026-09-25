@@ -65,9 +65,13 @@ final class ContentProvider implements ServiceProvider
             $this->declarations[] = $declaration;
         }
 
+        // The reader is the mechanics every content feature composes a
+        // QuerySpec against; one instance is declared here and shared.
+        $container->set(new PostReader());
+
         $container->set(new ContentRepository(
             mapper: new PostMapper(),
-            reader: new PostReader(),
+            reader: $container->get(PostReader::class),
             search: $container->get(IndexedSearchSwap::class),
         ));
 

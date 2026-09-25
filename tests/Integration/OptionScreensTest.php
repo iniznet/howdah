@@ -19,14 +19,15 @@ use Iniznet\Mahout\Fields\Hooks as FieldHooks;
  */
 final class OptionScreensTest extends \WP_UnitTestCase
 {
-    public function testTheCompositionRootBindsAnEmptyOptionScreensCollection(): void
+    public function testTheCompositionRootBindsTheDeclaredOptionScreens(): void
     {
         $screens = Bootstrap::services()->get(OptionScreensContract::class);
 
-        self::assertTrue($screens->isEmpty(), 'the starter theme declares no option screen.');
+        self::assertFalse($screens->isEmpty(), 'the worked example declares one option screen.');
+        self::assertCount(1, iterator_to_array($screens));
     }
 
-    public function testTheFieldsUiProviderAttachesNoSettingsPageForAnEmptyDeclaration(): void
+    public function testTheFieldsUiProviderAttachesTheDeclaredSettingsPage(): void
     {
         $services = Bootstrap::services();
 
@@ -40,9 +41,9 @@ final class OptionScreensTest extends \WP_UnitTestCase
 
         (new FieldsUiProvider())->boot($services);
 
-        self::assertFalse(
+        self::assertTrue(
             \has_action(FieldHooks::ADMIN_MENU),
-            'no declaration, no attachment — the opt-in and the empty case are one path.',
+            'the declared screen attaches its page; an undeclared one attaches nothing.',
         );
     }
 }

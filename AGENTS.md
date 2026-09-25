@@ -59,7 +59,7 @@ Arrows point one way only. A Component never imports a Repository. A Repository 
 
 ### Vertical slices
 
-The starter registers no feature modules and ships no `app/Features/` directories. The tree below is the shape the extending guide's worked example takes.
+The starter ships one feature — `app/Features/Series/` — as the worked example: a declared post type and taxonomy (`config/content-types.php`), a field panel (`config/fields.php`), an option screen (`config/display-options.php`), one repository, one Surface and one dispatch arm. Every declaration names itself as deletable: remove the config entries and the feature stops existing. New features take the same shape; the tree below is it.
 
 ```
 app/Features/Series/

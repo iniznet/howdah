@@ -20,12 +20,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class OptionScreensTest extends TestCase
 {
-    public function testTheStarterConfigIsTheDeclaredEmptyState(): void
+    public function testTheDeclaredConfigIsAWorkedExampleScreen(): void
     {
         $screens = require dirname(__DIR__, 2).'/config/display-options.php';
 
         self::assertIsArray($screens);
-        self::assertSame([], $screens);
+        self::assertCount(1, $screens, 'the worked example declares one option screen.');
+        self::assertInstanceOf(OptionScreen::class, $screens[0]);
+        self::assertSame('howdah-display', $screens[0]->pageSlug);
     }
 
     public function testTheCollectionOfNoDeclarationIsEmpty(): void

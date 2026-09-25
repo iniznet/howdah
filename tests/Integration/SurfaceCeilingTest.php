@@ -11,6 +11,8 @@ use Iniznet\Howdah\Features\Content\Surfaces\ContentArchive;
 use Iniznet\Howdah\Features\Content\Surfaces\EmbedContent;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePage;
 use Iniznet\Howdah\Features\Content\Surfaces\SinglePost;
+use Iniznet\Howdah\Features\Series\SeriesRepository;
+use Iniznet\Howdah\Features\Series\Surfaces\SeriesArchive;
 use Iniznet\Howdah\Surfaces\Arms\GenericList;
 use Iniznet\Howdah\Surfaces\Arms\NotFound;
 use Iniznet\Howdah\Surfaces\Arms\SearchResults;
@@ -34,6 +36,8 @@ final class SurfaceCeilingTest extends \WP_UnitTestCase
 
     private ContentRepository $content;
 
+    private SeriesRepository $series;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -41,6 +45,7 @@ final class SurfaceCeilingTest extends \WP_UnitTestCase
         $services = Bootstrap::services();
         $this->classes = $services->get(ClassResolver::class);
         $this->content = $services->get(ContentRepository::class);
+        $this->series = $services->get(SeriesRepository::class);
 
         // The shell's own one-per-request cost (autoloaded options, the
         // custom-CSS post) is paid here, outside the measured renders.
@@ -92,6 +97,15 @@ final class SurfaceCeilingTest extends \WP_UnitTestCase
 
         $observed = CeilingProbe::within(static fn (): string => $surface->render(), ContentArchive::QUERY_CEILING, 'ContentArchive cold');
         self::assertLessThanOrEqual(ContentArchive::QUERY_CEILING, $observed);
+    }
+
+    public function testTheSeriesArchiveStaysWithinTheArchiveCeilingCold(): void
+    {
+        self::factory()->post->create_many(3, ['post_type' => 'howdah_series', 'post_date' => '2024-01-01 00:00:00']);
+        $surface = new SeriesArchive(self::ctx(QueryKind::Archive, 'howdah_series'), $this->series, $this->classes);
+
+        $observed = CeilingProbe::within(static fn (): string => $surface->render(), SeriesArchive::QUERY_CEILING, 'SeriesArchive cold');
+        self::assertLessThanOrEqual(SeriesArchive::QUERY_CEILING, $observed);
     }
 
     public function testTheSearchSurfaceStaysWithinTheSearchCeilingCold(): void
