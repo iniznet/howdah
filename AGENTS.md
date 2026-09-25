@@ -158,13 +158,13 @@ Expected absence returns `?T`. Broken invariants throw.
 |---|---|
 | Read with the entity, never filtered | `Meta` |
 | Filtered, sorted, aggregated or counted | `Table` |
-| Repeater, display-only | `Meta`, versioned JSON |
-| Repeater, queried or unbounded | `Table` items table |
+| Repeater, display-only | `Meta`, one row per leaf, keyed by address |
+| Repeater, queried or unbounded | `Table` leaves table, indexed for the member query |
 | Option-context field | `Meta` always |
 
 `storage` is required on every field. No default.
 
-Repeater payloads are versioned (`{"v":1,"items":[...]}`) and encoded by a dedicated codec, never by the DTO. `JSON_THROW_ON_ERROR` always.
+A repeater stores no envelope: every leaf is one scalar at its address — the chain of positions and member ids from the root (`tags.2`, `credits.0.role`, `sections.0.blocks.1`). Repeaters nest up to three levels; a member declares `Carried` storage, because the root's target stores every leaf. A queried repeater is the developer's declaration, answered member-qualified (`credits.role`) over the leaves table's index — slower is the developer's choice, not the theme's.
 
 **Limitation:** a `Table` field cannot be bound as a block attribute. Block editor meta binding goes through `register_post_meta`, which only sees meta. If it must live in the editor's meta sidebar, it must be `Meta`. Its write path is the field panel and the field REST route, and nothing else.
 
