@@ -2,24 +2,33 @@
 
 ## Adding a feature
 
-A feature is a vertical slice under `app/Features/<Name>/` with a fixed shape:
+A feature is a vertical slice under `app/Features/<Name>/` with a fixed shape —
+the shipped Series example is it:
 
 ```
+config/content-types.php   # the declared post types and taxonomies
+config/fields.php          # the declared field panels, storage target per field
+config/display-options.php # the declared option screens
 app/Features/Series/
-  SeriesModule.php          # registers hooks
-  SeriesSchema.php          # CPT, taxonomies, field groups
-  SeriesRepository.php      # the only file with WP_Query
+  SeriesModule.php          # declares the repository into the container
+  SeriesRepository.php      # composes a QuerySpec per intent — the only query lane
   SeriesMapper.php          # the only file with WP_Post
-  SeriesData.php            # readonly DTO
+  SeriesData.php  SeriesPage.php
   Surfaces/  Components/
 ```
 
-1. Declare data in `<Feature>Schema.php`, with an explicit storage target per field.
+1. Declare the content model and the fields in `config/` — the field package's
+   admin surfaces derive from those lists and from nothing else.
 2. Register the module — one line in `app/Bootstrap.php`.
-3. Write the query in `<Feature>Repository.php`. Prime caches there.
+3. Write the query in `<Feature>Repository.php`, composing a `QuerySpec` per
+   intent against the shared `PostReader`; the mechanics stay in
+   `mahout-content`.
 4. Map to a DTO in `<Feature>Mapper.php`.
-5. Compose the page with a Surface and Components; each component gets its own markup file.
-6. Test: unit test every component, integration test the repository and the Surface's query ceiling.
+5. Compose the page with a Surface and Components; each component gets its own
+   markup file, and the Surface takes one dispatch arm with its declared
+   cacheability.
+6. Test: unit test every component, integration test the repository and the
+   Surface's query ceiling.
 
 ## Adding a dispatch arm
 
