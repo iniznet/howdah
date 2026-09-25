@@ -285,7 +285,7 @@ Production prerequisites, asserted by `doctor` and not optional for the declared
 composer format     # PHP-CS-Fixer, @PSR12 + @Symfony
 composer stan       # PHPStan, max level, no baseline
 composer psalm      # Psalm taint
-composer arch       # architecture rules
+composer arch       # the architecture rules, carried by the shared analysis composer stan runs
 composer rector     # Rector dry-run
 composer test       # PHPUnit
 composer hooks:check

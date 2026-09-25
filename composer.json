@@ -85,7 +85,6 @@
             "@format:check",
             "@stan",
             "@psalm",
-            "@arch",
             "@rector",
             "@test",
             "@hooks:check",
