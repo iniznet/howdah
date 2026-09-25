@@ -8,6 +8,7 @@ use Iniznet\Howdah\Exception\InvalidFieldDeclaration;
 use Iniznet\Howdah\Features\Fields\FieldPanels;
 use Iniznet\Howdah\Features\Fields\OptionScreens;
 use Iniznet\Howdah\Support\Request;
+use Iniznet\Mahout\Fields\Admin\FieldStyles;
 use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
 use Iniznet\Mahout\Fields\Contracts\OptionScreens as OptionScreensContract;
 use Iniznet\Mahout\Fields\Contracts\Panels;
@@ -85,6 +86,21 @@ final class EditorProvider implements ServiceProvider
         // exactly one key to grep for.
         $container->set($collection, Panels::class);
         $container->set(new OptionScreens($screens), OptionScreensContract::class);
+
+        // The stylesheet's URL is this theme's to name: the host-owned mapping
+        // the field package's default resolution is the fallback for. The
+        // package lives in this theme's vendor directory; a dev checkout's
+        // path repository links it, and a link is not a URL.
+        $stylesheet = \wp_normalize_path(dirname(__DIR__, 2).'/vendor/iniznet/mahout-fields/resources/fields.css');
+        $content = \wp_normalize_path(WP_CONTENT_DIR.'/');
+
+        $container->set(new FieldStyles(
+            url: \is_file($stylesheet) && \str_starts_with($stylesheet, $content)
+                ? \content_url(\substr($stylesheet, strlen($content)))
+                : null,
+            panels: $collection,
+            screens: new OptionScreens($screens),
+        ));
 
         // The save boundary reads the submitted panel through the package's
         // RequestInput contract; the superglobal is read in Support\Request
