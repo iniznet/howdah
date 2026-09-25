@@ -173,6 +173,10 @@ composer check
 
 ## Where to go next
 
+- **Reading and querying fields** — `mahout-fields`' `docs/getting-started.md`
+  carries the read path, the repeater assembly, and the member-qualified
+  query over `Table` storage.
+
 - **Storage rules** — [extending.md](./extending.md) and the AGENTS.md
   storage table decide `Meta` vs `Table` for every new field.
 - **A new page kind** — [extending.md](./extending.md) §"Adding a dispatch
