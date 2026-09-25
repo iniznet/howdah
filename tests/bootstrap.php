@@ -83,7 +83,7 @@ tests_add_filter(
         // would hide an index that core's table handling may have removed.
         global $wpdb;
 
-        foreach (['mahout_migrations', 'mahout_field_items', 'mahout_field_values'] as $table) {
+        foreach (['mahout_migrations', 'mahout_field_items', 'mahout_field_leaves', 'mahout_field_values'] as $table) {
             $wpdb->query('DROP TABLE IF EXISTS '.$wpdb->prefix.$table);
         }
 

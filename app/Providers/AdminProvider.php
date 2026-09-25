@@ -16,6 +16,7 @@ use Iniznet\Mahout\Db\MigrationRunner;
 use Iniznet\Mahout\Fields\Contracts\FieldReader;
 use Iniznet\Mahout\Fields\Contracts\FieldRegistry;
 use Iniznet\Mahout\Fields\Contracts\Panels;
+use Iniznet\Mahout\Fields\FieldLeavesTable;
 use Iniznet\Mahout\Fields\FieldQuery;
 use Iniznet\Mahout\Fields\FieldValuesTable;
 use Iniznet\Mahout\Kernel\Container;
@@ -126,6 +127,7 @@ final class AdminProvider implements ServiceProvider
                 $container->get(FieldRegistry::class),
                 $connection,
                 FieldValuesTable::table($connection->prefix(), $connection->charsetCollate()),
+                FieldLeavesTable::table($connection->prefix(), $connection->charsetCollate()),
             ),
         );
 
