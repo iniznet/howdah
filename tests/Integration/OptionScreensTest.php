@@ -27,6 +27,20 @@ final class OptionScreensTest extends \WP_UnitTestCase
         self::assertCount(1, iterator_to_array($screens));
     }
 
+    public function testTheDeclaredScreenNamesItsStructure(): void
+    {
+        $screen = iterator_to_array(Bootstrap::services()->get(OptionScreensContract::class))[0];
+
+        self::assertCount(2, $screen->tabs, 'the worked example shows both section kinds, on the two tabs of one page');
+        self::assertSame(['Options', 'Guide'], array_map(static fn ($tab) => $tab->label, $screen->tabs));
+        self::assertSame(['display_options'], array_map(static fn ($group) => $group->id, $screen->fieldGroups()), 'the fields live inside a tab\'s section');
+        self::assertArrayHasKey('Guide', array_flip(array_map(static fn ($tab) => $tab->label, $screen->tabs)));
+
+        $guide = $screen->tabs[1]->sections[0];
+        self::assertNull($guide->group, 'the guide tab carries no fields: a documentation page renders no form');
+        self::assertFileExists($guide->markupPath ?? '', 'the content section\'s markup is part of the codebase');
+    }
+
     public function testTheFieldsUiProviderAttachesTheDeclaredSettingsPage(): void
     {
         $services = Bootstrap::services();

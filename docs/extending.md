@@ -30,6 +30,19 @@ app/Features/Series/
 6. Test: unit test every component, integration test the repository and the
    Surface's query ceiling.
 
+## Declaring an option screen
+
+`config/display-options.php` declares whole settings pages. The shipped Display
+screen is the worked example: two tabs, the footer note's fields inside the
+first tab's field section, and the guide — a markup file under
+`app/Admin/markup/` the section names — inside the second. A screen whose
+tabs carry no field group renders no form: documentation, information and
+guides are screens like any other, and the field package's
+`Admin\OptionScreenManager` derives the page, its tabs, its save entry and
+its notice from the declaration. The full rules — one content shape per
+screen, the option context, the save per active tab — are in mahout-fields'
+getting-started, "Option screens".
+
 ## Adding a dispatch arm
 
 A new request kind is one arm in `Surfaces::resolve()`, written with `mahout-render`'s `SurfacePlanBuilder`: `->surface(static fn (): Component => new MySurface(...))` then one terminal. `shared($key)` declares the Shared pair, `uncacheable($reason)` declares the pair that stores nothing and must say why, and `guardOverflow($reason)->shared($key)` is a listing arm's second path — the same Surface, uncacheable and stated, beyond the last page the content graph holds. A class other than `Shared` is an arm that names its `Cacheability` and its `FragmentScope` as arguments to `SurfacePlan::wrapped()`. The dispatch-audit test and the surfaces reference both fail when an arm reaches no terminal, so an arm cannot ship half-declared.

@@ -61,7 +61,14 @@ final readonly class Request
     {
         /** @var array<string, mixed> $post */
         $post = \wp_unslash($_POST);
+        /** @var array<string, mixed> $query */
+        $query = \wp_unslash($_GET);
 
-        return PanelRequest::fromArray($post);
+        // The query names navigation state (an option screen's active tab),
+        // the body the submitted values; the body wins on a collision.
+        /** @var array<string, mixed> $merged */
+        $merged = array_merge($query, $post);
+
+        return PanelRequest::fromArray($post, $merged);
     }
 }

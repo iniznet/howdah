@@ -117,7 +117,9 @@ final class EditorProvider implements ServiceProvider
                 }
 
                 foreach ($this->optionScreens as $screen) {
-                    $registry->register($screen->group);
+                    foreach ($screen->fieldGroups() as $group) {
+                        $registry->register($group);
+                    }
                 }
             },
             priority: 10,

@@ -19,9 +19,10 @@ use Iniznet\Mahout\Fields\Contracts\RequestInput;
 final readonly class PanelRequest implements RequestInput
 {
     /**
-     * @param array<string, mixed> $post the unslashed POST body
+     * @param array<string, mixed> $post   the unslashed POST body
+     * @param array<string, mixed> $params the request parameters, query and body merged, body winning
      */
-    private function __construct(private array $post)
+    private function __construct(private array $post, private array $params = [])
     {
     }
 
@@ -31,10 +32,19 @@ final readonly class PanelRequest implements RequestInput
      * tests and WP-CLI callers build the map directly.
      *
      * @param array<string, mixed> $post
+     * @param array<string, mixed> $params the request parameters, query and body merged, body winning
      */
-    public static function fromArray(array $post): self
+    public static function fromArray(array $post, array $params = []): self
     {
-        return new self($post);
+        return new self($post, $params);
+    }
+
+    #[\Override]
+    public function param(string $key): ?string
+    {
+        $value = $this->params[$key] ?? null;
+
+        return \is_string($value) ? $value : null;
     }
 
     #[\Override]

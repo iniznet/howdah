@@ -1,20 +1,26 @@
 <?php
 
 /**
- * The theme's declared display options. Every entry is an OptionScreen: a
- * mahout-fields field group declared for the option context, paired with the
- * settings page that renders it. The page itself is derived from this list
- * by the field package's Admin\FieldsUiProvider — one submenu page per
- * declared screen, its save entry and its write-failure notice.
+ * The theme's declared display options. Every entry is an OptionScreen: the
+ * settings page a tabbed set of sections renders. The page itself is derived
+ * from this list by the field package's Admin\FieldsUiProvider — one
+ * submenu page per declared screen, its save entry and its write-failure
+ * notice — and a screen whose tabs carry no field group at all renders no
+ * form: a documentation page is a screen like any other.
+ *
+ * A screen declares its content one way: its own group — the one-line shape
+ * for a plain field page — or tabs of sections, each section either one
+ * group's fields (inside the save lifecycle) or a markup file the declaring
+ * feature ships. The shipped example shows both, on the two tabs of one
+ * page: the footer note's fields, and the guide that documents them.
  *
  * A value is read through the field layer's reader with ObjectRef::option();
  * the package's MetaStorage stores it in wp_options under its own
  * "mahout_fields/<field id>" key. A field declares no default: absence reads
  * null, and a default is the consumer's decision.
  *
- * The shipped declaration is the worked example: one footer note rendered by
- * the site chrome's colophon. Delete the entry and the settings page stops
- * existing, and the chrome falls back to the site description.
+ * Delete the entry and the settings page stops existing, and the chrome
+ * falls back to the site description.
  *
  * Labels are plain strings: a declaration is read at boot, before the text
  * domain loads, so a declaration cannot translate.
@@ -27,6 +33,8 @@ declare(strict_types=1);
 use Iniznet\Mahout\Fields\FieldGroup;
 use Iniznet\Mahout\Fields\ObjectContext;
 use Iniznet\Mahout\Fields\OptionScreen;
+use Iniznet\Mahout\Fields\OptionSection;
+use Iniznet\Mahout\Fields\OptionTab;
 use Iniznet\Mahout\Fields\StorageTarget;
 use Iniznet\Mahout\Fields\TextField;
 
@@ -39,7 +47,16 @@ return [
         pageSlug: 'howdah-display',
         pageTitle: 'Display',
         menuTitle: 'Display',
-        group: $displayGroup,
+        group: null,
         capability: 'manage_options',
+        description: 'How the site takes its display options, and where each one renders.',
+        tabs: [
+            new OptionTab('Options', [
+                OptionSection::fields('Footer note', $displayGroup),
+            ]),
+            new OptionTab('Guide', [
+                OptionSection::content('How display options work', __DIR__.'/../app/Admin/markup/display-guide.php'),
+            ]),
+        ],
     ),
 ];
