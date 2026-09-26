@@ -291,7 +291,7 @@ composer test       # PHPUnit
 composer hooks:check
 composer i18n:check # generated POT is current
 composer doctor     # installation assembly
-composer config:check # divergence: analyzer config and architecture rules are referenced, not copied
+composer config:check # divergence: analyzer config, architecture rules and the gate set are referenced, not copied
 composer check      # all of the above
 ```
 
