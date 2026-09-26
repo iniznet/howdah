@@ -5,8 +5,10 @@
  * request's intent becomes a query. The mechanics — the hardened shape, the
  * peek pagination, the priming — belong to mahout-content's PostReader; this
  * file composes a QuerySpec for the declared post type and maps the primed
- * rows. The tagline is read per post through the field layer after the
- * reader's priming, one statement per store.
+ * rows. Every field on the page is read through the field layer after both
+ * primings — the reader's, for post and term caches, and the field layer's, for
+ * the value table — so a page costs one statement per store whichever target each
+ * field was anchored to.
  */
 
 declare(strict_types=1);
@@ -43,6 +45,14 @@ final readonly class SeriesRepository
             ],
             perPage: $perPage,
             offset: ($page - 1) * $perPage,
+        ));
+
+        // Filed before mapping, exactly as the meta and term caches are primed before
+        // mapping: which target a field happens to use must not decide how many
+        // statements a page costs.
+        $this->fields->prime(\array_map(
+            static fn (\WP_Post $post): ObjectRef => ObjectRef::post((int) $post->ID),
+            $rows->posts,
         ));
 
         $items = [];

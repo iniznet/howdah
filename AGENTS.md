@@ -240,9 +240,10 @@ Required, not optional:
 ```php
 update_meta_cache('post', $ids);
 update_object_term_cache($ids, $taxonomies);
+$fields->prime($refs);
 ```
 
-Before mapping any result set. Then one `get_post_meta($id)` per post, not one per field.
+Before mapping any result set. Then one `get_post_meta($id)` per post, not one per field — and the same for the field layer, whose `prime()` files a page's `Table`-stored rows in one statement per kind. Without it the storage target would decide how many statements a page costs, which is exactly the leak the field layer exists to close.
 
 Repository query defaults:
 

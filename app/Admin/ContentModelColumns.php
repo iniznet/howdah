@@ -7,6 +7,13 @@
  * what the reader returns, escaped once, and writes nothing; the filter
  * narrows the list through the field query builder's bounded statement, so
  * the listing never scans the custom table directly.
+ *
+ * This screen is the one place the value table is read row by row, and it is the
+ * one place that cannot prime: core hands the column hook a single post id, so no
+ * point in this file knows the page's ids. The cost stays bounded by the screen's
+ * per-page count rather than by the archive's size, and the screen is behind a
+ * capability. A public Surface that reads fields across rows must call
+ * `FieldReader::prime()` before mapping; this is not a pattern to copy.
  */
 
 declare(strict_types=1);
