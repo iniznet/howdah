@@ -69,6 +69,7 @@
     "config": {
         "sort-packages": true,
         "optimize-autoloader": true,
+        "classmap-authoritative": true,
         "allow-plugins": {}
     },
     "scripts": {

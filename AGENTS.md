@@ -258,6 +258,8 @@ Every new Surface gets a query-ceiling test. Options over ~1 KB are stored `auto
 
 Production prerequisites, asserted by `doctor` and not optional for the declared capacity to hold: OPcache enabled with `validate_timestamps=0` and a preload file, an autoloader generated with `--classmap-authoritative --optimize`, and an `innodb_buffer_pool_size` sized to the working set. None of them is required for correctness; all of them are required for the theme's declared capacity numbers to hold.
 
+`doctor` measures rather than recites: it counts the PHP files this installation can put on a request path and compares that with `opcache.max_accelerated_files`, reads the pool size and the site's own table statistics, inspects the installed classmap in a child process, and parses and preloads `preload.php` as far as the platform allows. A prerequisite wrong in every mode fails; the production-only ones are judged against the site's declared `WP_ENVIRONMENT_TYPE`, and an installation that declares nothing is told that those assertions are not being made; a development box gets a warning with its remedy; a check that cannot apply to this root is reported skipped. `vendor/bin/mahout-devtools load:probe --url=… --concurrency=… --requests=…` measures the running site and fails only when a request does not come back — absolute latency is a number to read, never a gate to game.
+
 ---
 
 ## Static access

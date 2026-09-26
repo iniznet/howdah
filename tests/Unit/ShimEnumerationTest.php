@@ -4,8 +4,10 @@
  * Rule 1 of the render pipeline, proved by enumeration: the theme root
  * contains exactly the declared set of PHP files — functions.php (the boot
  * entry, gated by CompositionRootTest), index.php and embed.php (the two
- * entry points, one call each) and header.php/footer.php (the two
- * compatibility shims). No other root file contains logic.
+ * entry points, one call each), header.php/footer.php (the two compatibility
+ * shims), the scaffold's tooling configs, and preload.php (the opcode-cache
+ * set, which runs once at pool start and never on a request). No other root
+ * file contains logic.
  */
 
 declare(strict_types=1);
@@ -31,6 +33,14 @@ final class ShimEnumerationTest extends TestCase
      */
     private const array PHP_TOOLING = ['.php-cs-fixer.dist.php', '.php-cs-fixer.paths.php', 'rector.php'];
 
+    /**
+     * The preload set compiles files and executes none of them, so it carries no
+     * render path; it is declared here rather than in the tooling list because it
+     * is the theme's own file, not a framework-neutral byte the drift gate keeps
+     * identical to the stub tree.
+     */
+    private const array PHP_PRELOAD = ['preload.php'];
+
     public function testTheRootContainsExactlyTheDeclaredPhpFiles(): void
     {
         $php = \array_values(\array_filter(
@@ -40,7 +50,7 @@ final class ShimEnumerationTest extends TestCase
 
         \sort($php);
 
-        $declared = [...self::PHP_ENTRIES, ...self::PHP_SHIMS, ...self::PHP_TOOLING];
+        $declared = [...self::PHP_ENTRIES, ...self::PHP_SHIMS, ...self::PHP_TOOLING, ...self::PHP_PRELOAD];
         \sort($declared);
 
         self::assertSame(
@@ -55,7 +65,7 @@ final class ShimEnumerationTest extends TestCase
     {
         $offences = [];
 
-        foreach (self::PHP_TOOLING as $file) {
+        foreach ([...self::PHP_TOOLING, ...self::PHP_PRELOAD] as $file) {
             $php = (string) file_get_contents(self::ROOT.'/'.$file);
 
             if (1 === \preg_match('/Bootstrap::|add_action|add_filter/', $php)) {
