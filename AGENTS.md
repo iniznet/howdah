@@ -123,6 +123,7 @@ app/Features/Series/
 | `LIKE` with a leading wildcard over `post_title`, `post_excerpt` or `post_content` | Measured at 150× to 450× the indexed path |
 | `sleep()`, `usleep()`, `set_time_limit()`, or a wait-for-lock loop on a request path | A waiting PHP worker is a worker unavailable to every other request |
 | A per-request log line, or query logging, in production | A cost that grows linearly with traffic |
+| A second host installing the mahout packages on the same site | One autoloader serves its copies to both hosts while the schema-version option, the field tables and the hook namespace are shared with no owner recorded |
 
 ---
 
@@ -259,6 +260,8 @@ Every new Surface gets a query-ceiling test. Options over ~1 KB are stored `auto
 
 Production prerequisites, asserted by `doctor` and not optional for the declared capacity to hold: OPcache enabled with `validate_timestamps=0` and a preload file, an autoloader generated with `--classmap-authoritative --optimize`, and an `innodb_buffer_pool_size` sized to the working set. None of them is required for correctness; all of them are required for the theme's declared capacity numbers to hold.
 
+`doctor` also counts the hosts that install the packages — every `wp-content/{plugins,mu-plugins,themes}/*/vendor/iniznet/mahout-*` — and fails when a site contains more than one. The runtime backstop is the kernel's process claim (mahout-kernel ADR-0007): `Kernel::inWordPress()` names the root that owns the process and refuses a second, so the collision cannot arrive quietly. This is not a style preference. Because Composer prepends each host's autoloader and WordPress loads the theme after the plugins, the theme's pinned copies of the shared classes run for both hosts, and the plugin's never run at all.
+
 `doctor` measures rather than recites: it counts the PHP files this installation can put on a request path and compares that with `opcache.max_accelerated_files`, reads the pool size and the site's own table statistics, inspects the installed classmap in a child process, and parses and preloads `preload.php` as far as the platform allows. A prerequisite wrong in every mode fails; the production-only ones are judged against the site's declared `WP_ENVIRONMENT_TYPE`, and an installation that declares nothing is told that those assertions are not being made; a development box gets a warning with its remedy; a check that cannot apply to this root is reported skipped. `vendor/bin/mahout-devtools load:probe --url=… --concurrency=… --requests=…` measures the running site and fails only when a request does not come back — absolute latency is a number to read, never a gate to game.
 
 ---
@@ -326,6 +329,7 @@ Seven package repositories and one theme. Route a change by its **kind**, not by
 | `meta` to `table` and `table` to `meta` migration |
 | Every Surface's query ceiling |
 | Every dispatch arm's declared `Cacheability` and `FragmentScope`, and a stated reason on every `Uncacheable` arm |
+| One composition root per process: a second root is refused, naming both |
 | The layer-0 suite: every front-end test passing with no object cache, no page cache and no CDN |
 | Byte-identical output for two anonymous visitors on a `Shared` Surface |
 | Single-flight: concurrent misses on one key cause exactly one regeneration |

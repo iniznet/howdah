@@ -46,7 +46,9 @@ final class Bootstrap
      */
     public static function run(): void
     {
-        $kernel = Kernel::inWordPress();
+        // This file is the root of record: naming itself is what lets a second host
+        // be refused instead of silently served this one's code.
+        $kernel = Kernel::inWordPress(self::class);
 
         $kernel->provider(ThemeProvider::class);
         $kernel->provider(AssetsProvider::class);
