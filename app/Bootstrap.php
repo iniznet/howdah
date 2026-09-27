@@ -39,15 +39,6 @@ use Iniznet\Mahout\Render\SurfaceErrorBoundary;
 
 final class Bootstrap
 {
-    /**
-     * The identity this host claims for every name the packages mint into the
-     * site — its ledger table, its option rows. One declaration, read here and by
-     * the test bootstrap, because a second mahout system on the same site must not
-     * share either, and a name with no host in it claims the whole site
-     * implicitly.
-     */
-    public const string IDENTITY = 'howdah';
-
     private static ?Kernel $kernel = null;
 
     /**
@@ -60,9 +51,12 @@ final class Bootstrap
         // be refused instead of silently served this one's code.
         $kernel = Kernel::inWordPress(self::class);
 
-        // Declared before any provider registers: DbProvider refuses to name the
-        // schema it owns without it, and there is no default to fall back to.
-        $kernel->service(RuntimeIdentity::fromSlug(self::IDENTITY), id: RuntimeIdentity::class);
+        // The identity is derived from this class, so there is nothing to keep in
+        // step: ProcessClaim already refuses a second distinct root in the process,
+        // and the namespace is what names the host rather than the class name. It is
+        // never derived from the active stylesheet — a child theme would move the
+        // site's storage underneath itself.
+        $kernel->service(RuntimeIdentity::fromClass(self::class), id: RuntimeIdentity::class);
 
         $kernel->provider(ThemeProvider::class);
         $kernel->provider(AssetsProvider::class);

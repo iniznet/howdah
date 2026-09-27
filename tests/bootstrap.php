@@ -83,13 +83,29 @@ tests_add_filter(
         // would hide an index that core's table handling may have removed.
         global $wpdb;
 
-        $ledger = Iniznet\Mahout\Db\MigrationLedgerSchema::nameFor(
-            (string) $wpdb->prefix,
-            Iniznet\Mahout\Kernel\RuntimeIdentity::fromSlug(Iniznet\Howdah\Bootstrap::IDENTITY),
-        );
+        $identity = Iniznet\Mahout\Kernel\RuntimeIdentity::fromClass(Iniznet\Howdah\Bootstrap::class);
+        $prefix = (string) $wpdb->prefix;
 
-        foreach ([$ledger->value, 'mahout_field_items', 'mahout_field_leaves', 'mahout_field_values'] as $table) {
-            $wpdb->query('DROP TABLE IF EXISTS '.$wpdb->prefix.$table);
+        $owned = [
+            // Both ledger names: the one this host owns, and the unsuffixed one it
+            // had before identities existed. LegacyNameAdoption moves the second
+            // onto the first inside the run below, so a first install that cleared
+            // only its own name would adopt a stale history from an earlier suite
+            // and skip creating the tables that history claims exist.
+            Iniznet\Mahout\Db\MigrationLedgerSchema::nameFor($prefix, $identity)->value,
+            $prefix.'mahout_migrations',
+            $prefix.'mahout_field_items',
+            $prefix.'mahout_field_leaves',
+            $prefix.'mahout_field_values',
+        ];
+
+        foreach ($owned as $table) {
+            $wpdb->query('DROP TABLE IF EXISTS '.$table);
+        }
+
+        foreach (['db_schema_version', 'db_search_index', 'db_sweep_cursors'] as $suffix) {
+            \delete_option($identity->namespacedName($suffix));
+            \delete_option('mahout_'.$suffix);
         }
 
         Iniznet\Howdah\Bootstrap::services()
