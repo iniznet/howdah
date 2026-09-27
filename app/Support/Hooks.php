@@ -131,6 +131,21 @@ final class Hooks
     public const string ADMIN_NOTICES = 'admin_notices';
 
     /**
+     * The prefix of core's per-screen load action: `load-{page_hook}`, where the
+     * suffix is the hook suffix `add_menu_page()` and friends return, and it is not
+     * knowable until the page has registered.
+     *
+     * This is the only hook name in the theme that is composed rather than named, so
+     * it is declared here: a call site that wrote `'load-' . $hook` would put a hook
+     * fragment outside the reference that documents every name the theme touches.
+     *
+     * @since 1.0
+     *
+     * @action
+     */
+    public const string PAGE_LOAD_PREFIX = 'load-';
+
+    /**
      * WP-CLI's registration action, fired before WP-CLI dispatches. The
      * migration command registers here, behind the provider's WP_CLI gate;
      * a site without WP-CLI never reaches this hook.

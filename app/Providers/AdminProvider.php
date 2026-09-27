@@ -83,7 +83,7 @@ final class AdminProvider implements ServiceProvider
                     },
                 );
 
-                \add_action('load-'.$hook, $migrations->handle(...));
+                \add_action(Hooks::PAGE_LOAD_PREFIX.$hook, $migrations->handle(...));
             },
             priority: 10,
             accepted_args: 0,
