@@ -35,6 +35,7 @@ use Iniznet\Mahout\Db\AddSearchIndex;
 use Iniznet\Mahout\Db\Contracts\Migration;
 use Iniznet\Mahout\Db\Contracts\SqlConnection;
 use Iniznet\Mahout\Db\DdlEmitter;
+use Iniznet\Mahout\Db\RenameSearchIndex;
 use Iniznet\Mahout\Db\Search\IndexedSearchSwap;
 use Iniznet\Mahout\Db\SearchIndex;
 use Iniznet\Mahout\Kernel\Container;
@@ -79,13 +80,15 @@ final class ContentProvider implements ServiceProvider
         // ledger is built when the db provider's boot reads it, and the db
         // provider boots before this one.
         $connection = $container->get(SqlConnection::class);
+        $emitter = $container->get(DdlEmitter::class);
         $index = SearchIndex::onPosts($connection->prefix());
 
         \add_filter(
             Hooks::MIGRATIONS,
             static fn (mixed $migrations): array => self::migrations(
                 $migrations,
-                new AddSearchIndex($connection, $container->get(DdlEmitter::class), $index),
+                new AddSearchIndex($connection, $emitter, $index),
+                new RenameSearchIndex($connection, $emitter, $index),
             ),
             priority: 10,
             accepted_args: 1,
@@ -133,29 +136,33 @@ final class ContentProvider implements ServiceProvider
     }
 
     /**
-     * The validated migration payload: the declared list plus the search
-     * index. A wrong shape is refused, never coerced.
+     * The validated migration payload: the incoming list plus the ones this
+     * provider declares. A wrong shape is refused, never coerced.
      *
      * @return list<Migration>
      */
-    private static function migrations(mixed $migrations, Migration $index): array
+    private static function migrations(mixed $migrations, Migration ...$declared): array
     {
         if (!\is_array($migrations)) {
             throw InvalidHookResult::notAMigrationList();
         }
 
-        $declared = [];
+        $validated = [];
 
         foreach ($migrations as $migration) {
             if (!$migration instanceof Migration) {
                 throw InvalidHookResult::notAMigration();
             }
 
-            $declared[] = $migration;
+            $validated[] = $migration;
         }
 
-        $declared[] = $index;
+        // Appended rather than spread: the spread of two lists is a list in fact,
+        // and the analyzer will not infer it, so the loop says what is true.
+        foreach ($declared as $migration) {
+            $validated[] = $migration;
+        }
 
-        return $declared;
+        return $validated;
     }
 }
