@@ -83,7 +83,12 @@ tests_add_filter(
         // would hide an index that core's table handling may have removed.
         global $wpdb;
 
-        foreach (['mahout_migrations', 'mahout_field_items', 'mahout_field_leaves', 'mahout_field_values'] as $table) {
+        $ledger = Iniznet\Mahout\Db\MigrationLedgerSchema::nameFor(
+            (string) $wpdb->prefix,
+            Iniznet\Mahout\Kernel\RuntimeIdentity::fromSlug(Iniznet\Howdah\Bootstrap::IDENTITY),
+        );
+
+        foreach ([$ledger->value, 'mahout_field_items', 'mahout_field_leaves', 'mahout_field_values'] as $table) {
             $wpdb->query('DROP TABLE IF EXISTS '.$wpdb->prefix.$table);
         }
 
