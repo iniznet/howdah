@@ -246,6 +246,12 @@ $fields->prime($refs);
 
 Before mapping any result set. Then one `get_post_meta($id)` per post, not one per field — and the same for the field layer, whose `prime()` files a page's `Table`-stored rows in one statement per kind. Without it the storage target would decide how many statements a page costs, which is exactly the leak the field layer exists to close.
 
+A repeater that declares `expectedMaxItems` is primed with the rest of the page; one that
+declares nothing costs one read per object per group, because the only ceiling available
+would be a guess and a guess filed as a bound truncates. The declaration is enforced on
+write, which is what makes it a ceiling rather than a hope — so the bound is a throughput
+decision, not a validation preference.
+
 Repository query defaults:
 
 ```php
