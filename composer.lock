@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "iniznet/mahout-assets",
-            "version": "dev-main",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-assets.git",
-                "reference": "ec5259638d38af014ef76829f68c296b9575cc1d"
+                "reference": "639d82da2fe9c761b651387e208aafc288b1be6d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-assets/zipball/ec5259638d38af014ef76829f68c296b9575cc1d",
-                "reference": "ec5259638d38af014ef76829f68c296b9575cc1d",
+                "url": "https://api.github.com/repos/iniznet/mahout-assets/zipball/639d82da2fe9c761b651387e208aafc288b1be6d",
+                "reference": "639d82da2fe9c761b651387e208aafc288b1be6d",
                 "shasum": ""
             },
             "require": {
@@ -27,7 +27,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "bin": [
                 "bin/mahout-assets-budget"
             ],
@@ -114,20 +113,20 @@
                 "vite",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:02+00:00"
+            "time": "2026-09-28T08:10:22+00:00"
         },
         {
             "name": "iniznet/mahout-content",
-            "version": "dev-main",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-content.git",
-                "reference": "78b8d3b5bcd45201d0b9db2933344b808544b2ac"
+                "reference": "260d79146e8718d46fa02a6118a481f4dd5ba121"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-content/zipball/78b8d3b5bcd45201d0b9db2933344b808544b2ac",
-                "reference": "78b8d3b5bcd45201d0b9db2933344b808544b2ac",
+                "url": "https://api.github.com/repos/iniznet/mahout-content/zipball/260d79146e8718d46fa02a6118a481f4dd5ba121",
+                "reference": "260d79146e8718d46fa02a6118a481f4dd5ba121",
                 "shasum": ""
             },
             "require": {
@@ -137,7 +136,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -218,20 +216,20 @@
                 "taxonomy",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:02+00:00"
+            "time": "2026-09-28T08:10:30+00:00"
         },
         {
             "name": "iniznet/mahout-db",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-db.git",
-                "reference": "7e4856d666c378b2f939476762d1b61a424b0447"
+                "reference": "aa2aa3de3626b272b69ee7431c8ffcd2f4fdb6fc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-db/zipball/7e4856d666c378b2f939476762d1b61a424b0447",
-                "reference": "7e4856d666c378b2f939476762d1b61a424b0447",
+                "url": "https://api.github.com/repos/iniznet/mahout-db/zipball/aa2aa3de3626b272b69ee7431c8ffcd2f4fdb6fc",
+                "reference": "aa2aa3de3626b272b69ee7431c8ffcd2f4fdb6fc",
                 "shasum": ""
             },
             "require": {
@@ -241,7 +239,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -321,20 +318,20 @@
                 "schema",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:03+00:00"
+            "time": "2026-09-28T07:51:26+00:00"
         },
         {
             "name": "iniznet/mahout-fields",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-fields.git",
-                "reference": "05b09d087d2465ede4ef8a2a00691f99af1b8a67"
+                "reference": "f5522ddab544d340a24ee299a07509a555b6a656"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-fields/zipball/05b09d087d2465ede4ef8a2a00691f99af1b8a67",
-                "reference": "05b09d087d2465ede4ef8a2a00691f99af1b8a67",
+                "url": "https://api.github.com/repos/iniznet/mahout-fields/zipball/f5522ddab544d340a24ee299a07509a555b6a656",
+                "reference": "f5522ddab544d340a24ee299a07509a555b6a656",
                 "shasum": ""
             },
             "require": {
@@ -346,7 +343,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -428,20 +424,20 @@
                 "storage",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:03+00:00"
+            "time": "2026-09-28T07:51:32+00:00"
         },
         {
             "name": "iniznet/mahout-kernel",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-kernel.git",
-                "reference": "7216af3aa13bb059a73955edf19e241855ffe52a"
+                "reference": "1f45b7ff7cd8a2458e3370ac28bfdd833d2e77e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-kernel/zipball/7216af3aa13bb059a73955edf19e241855ffe52a",
-                "reference": "7216af3aa13bb059a73955edf19e241855ffe52a",
+                "url": "https://api.github.com/repos/iniznet/mahout-kernel/zipball/1f45b7ff7cd8a2458e3370ac28bfdd833d2e77e8",
+                "reference": "1f45b7ff7cd8a2458e3370ac28bfdd833d2e77e8",
                 "shasum": ""
             },
             "require": {
@@ -450,7 +446,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -530,20 +525,20 @@
                 "mahout",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:02+00:00"
+            "time": "2026-09-28T07:51:08+00:00"
         },
         {
             "name": "iniznet/mahout-render",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-render.git",
-                "reference": "bbf93b55c3e15c232e74227465f44857a6a260c2"
+                "reference": "ab1c0d1220d3eb5a97267f5be9099929b701f4c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-render/zipball/bbf93b55c3e15c232e74227465f44857a6a260c2",
-                "reference": "bbf93b55c3e15c232e74227465f44857a6a260c2",
+                "url": "https://api.github.com/repos/iniznet/mahout-render/zipball/ab1c0d1220d3eb5a97267f5be9099929b701f4c4",
+                "reference": "ab1c0d1220d3eb5a97267f5be9099929b701f4c4",
                 "shasum": ""
             },
             "require": {
@@ -553,7 +548,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -633,20 +627,20 @@
                 "surfaces",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:02+00:00"
+            "time": "2026-09-28T07:51:39+00:00"
         },
         {
             "name": "iniznet/mahout-ui",
-            "version": "dev-main",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-ui.git",
-                "reference": "16b2499d87523bda7bbbcd67ada54bd12847c0e0"
+                "reference": "0a0e3de71efaf199f1bc25c2282cebfd8a011c89"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-ui/zipball/16b2499d87523bda7bbbcd67ada54bd12847c0e0",
-                "reference": "16b2499d87523bda7bbbcd67ada54bd12847c0e0",
+                "url": "https://api.github.com/repos/iniznet/mahout-ui/zipball/0a0e3de71efaf199f1bc25c2282cebfd8a011c89",
+                "reference": "0a0e3de71efaf199f1bc25c2282cebfd8a011c89",
                 "shasum": ""
             },
             "require": {
@@ -658,7 +652,6 @@
             "require-dev": {
                 "iniznet/mahout-devtools": "^1.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -738,7 +731,7 @@
                 "ui",
                 "wordpress"
             ],
-            "time": "2026-09-25T13:52:03+00:00"
+            "time": "2026-09-28T07:51:45+00:00"
         }
     ],
     "packages-dev": [
@@ -2431,16 +2424,16 @@
         },
         {
             "name": "iniznet/mahout-devtools",
-            "version": "dev-main",
+            "version": "1.0.4",
             "source": {
                 "type": "git",
                 "url": "git@github.com:iniznet/mahout-devtools.git",
-                "reference": "1c99b4a2f9318cfc0b15bdef4ef59f551d52c9a1"
+                "reference": "387d4c3ae7fa26b26d19b427ac8d6e4c1b5f39d2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/iniznet/mahout-devtools/zipball/1c99b4a2f9318cfc0b15bdef4ef59f551d52c9a1",
-                "reference": "1c99b4a2f9318cfc0b15bdef4ef59f551d52c9a1",
+                "url": "https://api.github.com/repos/iniznet/mahout-devtools/zipball/387d4c3ae7fa26b26d19b427ac8d6e4c1b5f39d2",
+                "reference": "387d4c3ae7fa26b26d19b427ac8d6e4c1b5f39d2",
                 "shasum": ""
             },
             "require": {
@@ -2452,7 +2445,6 @@
                 "vimeo/psalm": "^6.0",
                 "yoast/phpunit-polyfills": "^1.1"
             },
-            "default-branch": true,
             "bin": [
                 "bin/mahout-devtools"
             ],
@@ -2544,7 +2536,7 @@
                 "tooling",
                 "wordpress"
             ],
-            "time": "2026-09-22T15:24:24+00:00"
+            "time": "2026-09-28T08:27:22+00:00"
         },
         {
             "name": "kelunik/certificate",
