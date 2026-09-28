@@ -18,12 +18,13 @@ The theme's own promise is small and greppable:
 
 ## The reference documents
 
-Two documents are generated from the live tree and enforced by the suite:
+Three documents are generated from the live tree and enforced by the suite:
 
 - `docs/reference/surfaces.md` — one row per plan a dispatch arm reaches: Surface, cacheability, fragment scope, reason.
-- `docs/reference/hooks.md` — one row per hook: name, hook, kind, arguments, since, purpose.
+- `docs/reference/actions.md` — one row per action: name, hook, arguments, since, purpose.
+- `docs/reference/filters.md` — one row per filter: the same columns, filters only.
 
-A committed copy that drifts from the code fails the test suite. Both are regenerated with the flags documented in [getting-started.md](getting-started.md).
+A committed copy that drifts from the code fails the test suite. All three are regenerated with the commands documented in [getting-started.md](getting-started.md).
 
 ## Changing a contract
 

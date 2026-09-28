@@ -21,10 +21,25 @@ order. The format follows Semantic Versioning; a major entry names each removal.
   `Cache\HeaderPolicy` since the query-mechanics move below.
 - The `Document` component: one shell per request, `wp_head` and `wp_footer`
   inside it, fed from the resolved plan.
-- Reference gates: `docs/reference/surfaces.md` and `docs/reference/hooks.md`
-  are generated from the live code, and a stale committed copy fails the suite.
+- Reference gates: `docs/reference/surfaces.md`, `docs/reference/actions.md` and
+  `docs/reference/filters.md` are generated from the live code, and a stale committed copy
+  fails the suite.
 
 ### Changed
+
+- The generated hook reference is now two documents — `docs/reference/actions.md` and
+  `docs/reference/filters.md`, replacing `docs/reference/hooks.md`. A single mixed table
+  asked the reader to filter rows for the question they actually came with, which hooks
+  fire and forget versus which hooks return a value, and that distinction is already
+  recorded on every constant's docblock. `composer hooks:check` gates both files, and a
+  package that declares none of one kind still carries the other document, so the gate
+  cannot quietly stop running. Adopted from `iniznet/mahout-devtools` 2.0.1, whose
+  `hooks:check` and `hooks:generate` take `--outdir=docs/reference`; the canonical command
+  text lives in that package's gate manifest, and this repository's scripts are compared
+  against it by `composer config:check`.
+- `docs/contracts.md` and `docs/getting-started.md` name three generated documents now —
+  the surfaces reference and the two hook documents — and `docs/planning/` is untouched
+  because it is the private corpus, published with no repository.
 
 - `Bootstrap` renders the request through the dispatch table; `index.php`
   echoes `Bootstrap::render()`.

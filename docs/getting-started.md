@@ -34,7 +34,7 @@ The theme runs without a build step: `AssetsProvider` reads `build/manifest.json
 | `composer psalm` | Psalm taint analysis |
 | `composer arch` | architecture rules |
 | `composer rector` | Rector dry-run |
-| `composer hooks:check` | the hook reference is current |
+| `composer hooks:check` | the action and filter hook references are current |
 | `composer i18n:check` | the generated POT is current |
 | `composer doctor` | the installation assembles |
 | `composer check` | all of the above |
@@ -43,13 +43,13 @@ The theme runs without a build step: `AssetsProvider` reads `build/manifest.json
 
 ## Regenerating the reference documents
 
-Two documents are generated from the live tree; a stale committed copy fails the suite.
+Three documents are generated from the live tree; a stale committed copy fails the suite.
 
 ```bash
 # the surfaces reference, from the dispatch table
 MAHOUT_SURFACES_REGENERATE=1 vendor/bin/phpunit --filter SurfacesReferenceTest
 
-# the hook reference
+# the hook references, one document per kind
 composer hooks:generate
 ```
 
